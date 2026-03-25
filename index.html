@@ -1,0 +1,2318 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Nutrition Portions Game</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;600;700;800;900&family=Roboto:wght@400;500;700;900&family=Zen+Maru+Gothic:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg0:#0b0f1a;
+      --bg1:#0d1020;
+      --panel:rgba(16,20,34,.68);
+      --panel2:rgba(10,14,28,.82);
+      --border:rgba(255,255,255,.12);
+      --border2:rgba(255,255,255,.16);
+      --text:#eef2ff;
+      --muted:rgba(238,242,255,.70);
+      --brand:#2f3b52;
+      --brand2:#3a4a68;
+      --danger:#ff4d4f;
+      --radius:14px;
+      --shadow:0 18px 50px rgba(0,0,0,.55);
+      --scrollTrack:#121826;
+      --scrollThumb:#3a4052;
+      --scrollThumbHover:#4b5266;
+    }
+    html,body{
+      margin:0;
+      height:100%;
+      overflow:hidden;
+      background:
+        radial-gradient(1200px 700px at 12% 18%, rgba(76,125,255,.16), transparent 60%),
+        radial-gradient(900px 600px at 90% 80%, rgba(88,150,130,.10), transparent 62%),
+        linear-gradient(180deg, var(--bg0), var(--bg1));
+      color:var(--text);
+      font-family:'Zen Maru Gothic','Noto Sans JP','Roboto', ui-sans-serif, system-ui, -apple-system, Segoe UI, Helvetica, Arial, sans-serif;
+      font-weight:900;
+      font-synthesis-weight:none;
+      text-rendering:optimizeLegibility;
+      -webkit-font-smoothing:antialiased;
+    }
+    *, *::before, *::after { box-sizing:border-box }
+    canvas { display:block; width:100vw; height:100vh; touch-action:none; -webkit-user-select:none; user-select:none }
+    html{ scrollbar-color: var(--scrollThumb) var(--scrollTrack); scrollbar-width: thin }
+    *::-webkit-scrollbar{ width:10px; height:10px }
+    *::-webkit-scrollbar-track{ background: var(--scrollTrack); border-radius: 8px }
+    *::-webkit-scrollbar-thumb{
+      background: var(--scrollThumb);
+      border-radius: 8px;
+      border: 2px solid transparent;
+      background-clip: padding-box;
+    }
+    *::-webkit-scrollbar-thumb:hover{ background: var(--scrollThumbHover) }
+
+    #topbar{
+      position:fixed;
+      top:8px;
+      left:8px;
+      right:8px;
+      z-index:10;
+      display:flex;
+      gap:8px;
+      align-items:flex-start;
+    }
+    #hud{
+      position:relative;
+      background:var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      padding:12px 14px;
+      border-radius:var(--radius);
+      border:1px solid var(--border);
+      box-shadow:var(--shadow);
+      max-width:min(520px, calc(100vw - 28px));
+      flex:0 0 auto;
+    }
+    .hud-row{ display:flex; align-items:center; gap:8px; flex-wrap:wrap }
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      background:rgba(255,255,255,.06);
+      border:1px solid var(--border);
+      padding:7px 10px;
+      border-radius:12px;
+      font-weight:800;
+      letter-spacing:.01em;
+      font-variant-numeric:tabular-nums;
+    }
+    .hint{ color:var(--muted); font-weight:900 }
+    #targets{
+      position:relative;
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      background:var(--panel);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:10px 12px;
+      width:auto;
+      box-shadow:var(--shadow);
+      flex:1 1 auto;
+    }
+    .chip{
+      display:grid;
+      grid-template-columns: 1fr auto;
+      grid-template-rows: auto auto;
+      align-items:center;
+      gap:4px;
+      background:linear-gradient(180deg, rgba(255,255,255,.08), rgba(255,255,255,.04));
+      border:1px solid var(--border2);
+      border-radius:14px;
+      padding:8px 10px;
+      min-width:0;
+    }
+    .chip.exceeded{ border-color:rgba(255,77,79,.55); box-shadow:0 0 0 1px rgba(255,77,79,.18) inset }
+    .chip .label{ grid-column:1; grid-row:1; font-size:11px; font-weight:900; color:var(--chip-color,#6b86c4); letter-spacing:.02em; text-transform:uppercase }
+    .chip .val{ grid-column:2; grid-row:1; font-size:12px; font-weight:900; justify-self:end }
+    .chip .bar{ grid-column:1 / -1; grid-row:2; height:6px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.12) }
+    .chip .fill{ height:100%; background:linear-gradient(90deg, var(--chip-color,#1e3a8a), rgba(255,255,255,.10)); border-radius:999px }
+
+    #overlay{
+      position:fixed;
+      inset:0;
+      display:none;
+      align-items:center;
+      justify-content:center;
+      background:rgba(3,5,10,.70);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index:25;
+    }
+    #overlay .panel{
+      background:var(--panel2);
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:20px 22px;
+      text-align:center;
+      width:min(420px, calc(100vw - 28px));
+      box-shadow:var(--shadow);
+    }
+    #gameover{ font-size:18px; font-weight:900; letter-spacing:.01em }
+    #overlay .btn-row{ margin-top:14px; justify-content:center }
+    #overlay .btn{ flex:0 0 auto; min-width:140px }
+
+    #setup{
+      position:fixed;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:rgba(3,5,10,.70);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      z-index:20;
+      padding:18px 14px;
+    }
+    #setup .panel{
+      background:linear-gradient(135deg, rgba(16,20,34,.95) 0%, rgba(11,15,26,.96) 100%);
+      border:1px solid var(--border);
+      border-radius:20px;
+      padding:22px 22px;
+      width:min(620px, 100%);
+      max-height:calc(100vh - 36px);
+      overflow:auto;
+      box-shadow:var(--shadow);
+    }
+    .card-header{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px }
+    .card-header .title{ font-size:20px; font-weight:900 }
+    .card-header .subtitle{ font-size:13px; color:var(--muted) }
+    .mode-row{ display:flex; gap:10px; margin-bottom:14px; flex-wrap:wrap }
+    .radio{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      background:rgba(255,255,255,.05);
+      border:1px solid var(--border);
+      padding:10px 12px;
+      border-radius:12px;
+      cursor:pointer;
+      user-select:none;
+    }
+    .radio input{
+      -webkit-appearance:none;
+      appearance:none;
+      width:16px;
+      height:16px;
+      border-radius:999px;
+      border:2px solid rgba(255,255,255,.70);
+      background:transparent;
+      display:inline-block;
+      flex:0 0 auto;
+    }
+    .radio input:checked{
+      background:#fff;
+      border-color:#fff;
+    }
+    .radio input:focus-visible{
+      outline:2px solid rgba(255,255,255,.30);
+      outline-offset:2px;
+    }
+    .form-grid{ display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:12px; text-align:left; margin-top:4px }
+    .form-grid label{ display:flex; flex-direction:column; gap:8px; font-size:13px; font-weight:700; color:rgba(238,242,255,.92) }
+    .form-grid input, .form-grid select{
+      width:100%;
+      font:inherit;
+      font-weight:900;
+      padding:12px 12px;
+      border-radius:12px;
+      border:1px solid var(--border);
+      background:rgba(8,11,22,.78);
+      color:var(--text);
+      outline:none;
+      box-shadow:0 1px 0 rgba(255,255,255,.05) inset;
+    }
+    .form-grid input::placeholder{ color:rgba(238,242,255,.45) }
+    .form-grid input:focus, .form-grid select:focus{ border-color:rgba(76,125,255,.55); box-shadow:0 0 0 4px rgba(76,125,255,.18) }
+    .section{ display:none }
+    .section.active{ display:block }
+    .btn-row{ display:flex; gap:10px; margin-top:18px }
+    .btn{
+      padding:12px 16px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      font-weight:900;
+      cursor:pointer;
+      transition:transform .06s ease, background .2s ease, border-color .2s ease;
+      flex:1;
+    }
+    .btn:hover{ background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.20) }
+    .btn:active{ transform:translateY(1px) }
+    .btn.primary{
+      border:0;
+      background:linear-gradient(180deg, var(--brand2), var(--brand));
+      box-shadow:0 10px 24px rgba(58,74,104,.28);
+    }
+    .btn.primary:hover{ filter:brightness(1.03) }
+    .review{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      padding:12px 12px;
+    }
+    .review .k{ color:rgba(238,242,255,.62); font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase }
+    .review .v{ font-size:14px; font-weight:900; margin-top:6px }
+    .review pre{ margin:10px 0 0; white-space:pre-wrap; word-break:break-word; font-size:12px; line-height:1.4; color:rgba(238,242,255,.86) }
+    .macro-label{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      margin-top:6px;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:900;
+      background:rgba(255,255,255,.10);
+      border:1px solid rgba(255,255,255,.18);
+    }
+    #macroTotal, #macroTotalProfile{ margin-top:6px; font-size:13px; font-weight:900; color:rgba(238,242,255,.88) }
+    input[type="range"]{ width:100% }
+
+    #toast{ position:fixed; top:16px; right:16px; z-index:30; display:flex; flex-direction:column; gap:8px }
+    .toast-msg{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(16,20,34,.72);
+      color:var(--text);
+      font-weight:900;
+      box-shadow:0 12px 30px rgba(0,0,0,.45);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+    .toast-msg.error{ border-color:rgba(255,77,79,.55) }
+    .toast-msg.info{ border-color:rgba(76,125,255,.55) }
+
+    .tbl{ width:100%; border-collapse:collapse; margin-top:10px; font-size:12px }
+    .tbl th, .tbl td{ border-bottom:1px solid rgba(255,255,255,.08); padding:8px 6px; text-align:left; vertical-align:top }
+    .tbl th{ color:rgba(238,242,255,.72); font-weight:900; letter-spacing:.04em; text-transform:uppercase }
+    .tbl td.num{ text-align:right; font-variant-numeric:tabular-nums }
+    .tbl tr:last-child td{ border-bottom:0 }
+    #mobileControls{
+      position:fixed;
+      left:0;
+      right:0;
+      bottom:0;
+      padding:12px 14px calc(12px + env(safe-area-inset-bottom));
+      display:none;
+      align-items:flex-end;
+      justify-content:flex-end;
+      gap:12px;
+      z-index:15;
+      pointer-events:none;
+    }
+    #mobileControls .touch-btn{
+      pointer-events:auto;
+      width:76px;
+      height:76px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.18);
+      background:rgba(16,20,34,.58);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      color:rgba(238,242,255,.92);
+      font:inherit;
+      font-weight:900;
+      letter-spacing:.01em;
+      box-shadow:0 18px 44px rgba(0,0,0,.55);
+    }
+    #mobileControls .touch-btn:active{ transform:translateY(1px) scale(0.99) }
+    @media (max-width: 520px){
+      #hud{ top:10px; left:10px; padding:10px 10px }
+      .chip{ min-width:160px }
+      .btn-row{ flex-direction:column }
+      #overlay .btn{ width:100% }
+    }
+  </style>
+</head>
+<body>
+  <div id="topbar">
+    <div id="hud">
+      <div class="hud-row">
+        <span id="energy" class="badge">Estimated Energy 0 kcal</span>
+        <span id="timer" class="badge">Time 0.0s</span>
+        <span id="lives" class="badge">Lives 5</span>
+      </div>
+    </div>
+    <div id="targets"></div>
+  </div>
+  <div id="overlay">
+    <div class="panel" id="endPanel">
+      <div id="gameover">Game Over</div>
+      <div class="btn-row">
+        <button class="btn primary" id="restart">Play Again</button>
+        <button class="btn" id="next" style="display:none">Back to Setup</button>
+        <button class="btn primary" id="pauseContinue" style="display:none">Resume</button>
+        <button class="btn" id="pauseExit" style="display:none">Exit</button>
+      </div>
+    </div>
+    <div class="panel" id="controlsPanel" style="display:none">
+      <div style="font-size:18px; font-weight:900; letter-spacing:.01em">Controls</div>
+      <div class="hint" id="controlsHint" style="margin-top:10px; line-height:1.6; text-align:left; color:rgba(238,242,255,.90)">
+        Move: WASD / Arrow keys<br>
+        Shoot: Space<br>
+        Pause / Exit: ESC
+      </div>
+      <div class="btn-row">
+        <button class="btn" id="controlsBack">Back</button>
+        <button class="btn primary" id="controlsStart">Start</button>
+      </div>
+    </div>
+  </div>
+  <div id="toast"></div>
+  <div id="setup">
+    <div class="panel">
+      <div class="card-header">
+        <div class="title">Select Energy Target</div>
+        <div class="subtitle" id="setupSubtitle">Choose a mode to compute today’s targets</div>
+      </div>
+      <div id="stepInput" class="section active">
+        <div class="mode-row">
+          <label class="radio"><input type="radio" name="mode" value="target" checked> <span>Enter Target Energy</span></label>
+          <label class="radio"><input type="radio" name="mode" value="profile"> <span>Compute from Profile</span></label>
+        </div>
+        <div id="targetSection" class="section active">
+          <div class="form-grid">
+            <label><span>Target Energy (kcal)</span><input id="kcal" type="number" min="600" placeholder="e.g. 1800"></label>
+            <label><span>Protein (%)</span>
+              <input id="macroProtein" type="range" min="5" max="40" step="1" value="20" style="accent-color:#556b2f">
+              <span id="macroProteinLabel" class="macro-label">20%</span>
+            </label>
+            <label><span>Fat (%)</span>
+              <input id="macroFat" type="range" min="10" max="40" step="1" value="25" style="accent-color:#6b8f3f">
+              <span id="macroFatLabel" class="macro-label">25%</span>
+            </label>
+            <label><span>Carbs (%)</span>
+              <input id="macroCarb" type="range" min="40" max="75" step="1" value="55" style="accent-color:#808000">
+              <span id="macroCarbLabel" class="macro-label">55%</span>
+            </label>
+          </div>
+          <div id="macroTotal">Total: 100% (Remaining 0%)</div>
+          <div style="margin-top:8px; font-size:12px; opacity:.8">Reference: Protein 10–20%, Fat 20–30%, Carbs 50–60%</div>
+        </div>
+        <div id="profileSection" class="section">
+          <div class="form-grid">
+            <label><span>Age</span><input id="age" type="number" min="1" value="25" placeholder="years"></label>
+            <label><span>Sex</span><select id="sex"><option value="male">Male</option><option value="female">Female</option></select></label>
+            <label><span>Height (cm)</span><input id="height" type="number" min="50" value="170" placeholder="centimeters"></label>
+            <label><span>Weight (kg)</span><input id="weight" type="number" min="10" value="65" placeholder="kilograms"></label>
+            <label><span>Activity Factor</span><select id="activity"><option value="1.2">Bedridden 1.2</option><option value="1.3">Light 1.3</option><option value="1.4" selected>Moderate 1.4</option></select></label>
+            <label>
+              <span>Stress Factor</span>
+              <select id="stress">
+                <option value="1.0" selected>Normal 1.0</option>
+                <option value="1.1">Pregnancy 1.1</option>
+                <option value="1.13">Fever 1.13</option>
+                <option value="1.2">Inpatient 1.2</option>
+                <option value="1.3">Minor surgery 1.3</option>
+                <option value="1.4">Growth 1.4</option>
+                <option value="1.4">Lactation 1.4</option>
+                <option value="ventilator">Ventilator 1.2 ~ 1.5</option>
+                <option value="sepsis">Sepsis 1.4 ~ 1.8</option>
+                <option value="burns">Burns 1.7 ~ 2.2</option>
+              </select>
+              <input id="stressValue" type="number" step="0.01" style="margin-left:8px; width:120px; display:none" placeholder="Enter value">
+            </label>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn primary" id="nextFromInput">Next</button>
+        </div>
+      </div>
+      <div id="stepEnergy" class="section">
+        <div class="review">
+          <div class="k">Energy Calculation</div>
+          <div class="v" id="energyReviewValue"></div>
+          <pre id="energyFormula"></pre>
+        </div>
+        <div class="review" style="margin-top:12px">
+          <div class="k">Select Macro Ratio</div>
+          <div class="mode-row" style="margin-top:6px">
+            <label class="radio"><input type="radio" name="macroModeProfile" value="auto" id="macroModeAutoProfile" checked> <span>Auto (Recommended)</span></label>
+            <label class="radio"><input type="radio" name="macroModeProfile" value="custom" id="macroModeCustomProfile"> <span>Custom</span></label>
+          </div>
+          <div id="macroCustomSectionProfile" class="section">
+            <div class="form-grid">
+              <label><span>Protein (%)</span>
+                <input id="macroProteinProfile" type="range" min="5" max="40" step="1" value="20" style="accent-color:#556b2f">
+                <span id="macroProteinProfileLabel" class="macro-label">20%</span>
+              </label>
+              <label><span>Fat (%)</span>
+                <input id="macroFatProfile" type="range" min="10" max="40" step="1" value="25" style="accent-color:#6b8f3f">
+                <span id="macroFatProfileLabel" class="macro-label">25%</span>
+              </label>
+              <label><span>Carbs (%)</span>
+                <input id="macroCarbProfile" type="range" min="40" max="75" step="1" value="55" style="accent-color:#808000">
+                <span id="macroCarbProfileLabel" class="macro-label">55%</span>
+              </label>
+            </div>
+            <div id="macroTotalProfile">Total: 100% (Remaining 0%)</div>
+            <div style="margin-top:8px; font-size:12px; opacity:.8">Reference: Protein 10–20%, Fat 20–30%, Carbs 50–60%</div>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="backToInputFromEnergy">Back</button>
+          <button class="btn primary" id="nextToPortionsFromEnergy">Next</button>
+        </div>
+      </div>
+      <div id="stepPortions" class="section">
+        <div class="review" style="margin-bottom:12px">
+          <div class="k">Selected Energy</div>
+          <div class="v" id="portionEnergyValue"></div>
+        </div>
+        <div id="portionReview" class="form-grid"></div>
+        <div class="review" style="margin-top:12px">
+          <div class="k">Per-Serving Breakdown</div>
+          <div id="breakdownTable"></div>
+        </div>
+        <div class="review" style="margin-top:12px">
+          <div class="k">Macronutrients</div>
+          <pre id="macroReview"></pre>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="backToInputFromPortions">Back</button>
+          <button class="btn primary" id="startGame">Start Game</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div id="mobileControls">
+    <button class="touch-btn" id="pauseTouch" aria-label="Pause">Pause</button>
+    <button class="touch-btn" id="shootTouch" aria-label="Shoot">Shoot</button>
+  </div>
+  <canvas id="game"></canvas>
+  <script>
+    const canvas = document.getElementById('game')
+    const ctx = canvas.getContext('2d')
+    const energyEl = document.getElementById('energy')
+    const targetsEl = document.getElementById('targets')
+    const timerEl = document.getElementById('timer')
+    const livesEl = document.getElementById('lives')
+    const overlay = document.getElementById('overlay')
+    const endPanel = document.getElementById('endPanel')
+    const controlsPanel = document.getElementById('controlsPanel')
+    const restartBtn = document.getElementById('restart')
+    const nextBtn = document.getElementById('next')
+    const pauseContinueBtn = document.getElementById('pauseContinue')
+    const pauseExitBtn = document.getElementById('pauseExit')
+    const controlsBackBtn = document.getElementById('controlsBack')
+    const controlsStartBtn = document.getElementById('controlsStart')
+    const controlsHintEl = document.getElementById('controlsHint')
+    const setup = document.getElementById('setup')
+    const toastEl = document.getElementById('toast')
+    const mobileControlsEl = document.getElementById('mobileControls')
+    const pauseTouchBtn = document.getElementById('pauseTouch')
+    const shootTouchBtn = document.getElementById('shootTouch')
+    const nextFromInputBtn = document.getElementById('nextFromInput')
+    const backToInputFromEnergyBtn = document.getElementById('backToInputFromEnergy')
+    const nextToPortionsFromEnergyBtn = document.getElementById('nextToPortionsFromEnergy')
+    const backToInputFromPortionsBtn = document.getElementById('backToInputFromPortions')
+    const startGameBtn = document.getElementById('startGame')
+    const setupSubtitleEl = document.getElementById('setupSubtitle')
+    const stepInputEl = document.getElementById('stepInput')
+    const stepEnergyEl = document.getElementById('stepEnergy')
+    const stepPortionsEl = document.getElementById('stepPortions')
+    const energyReviewValueEl = document.getElementById('energyReviewValue')
+    const energyFormulaEl = document.getElementById('energyFormula')
+    const portionEnergyValueEl = document.getElementById('portionEnergyValue')
+    const portionReviewEl = document.getElementById('portionReview')
+    const breakdownTableEl = document.getElementById('breakdownTable')
+    const macroReviewEl = document.getElementById('macroReview')
+    const ageEl = document.getElementById('age')
+    const sexEl = document.getElementById('sex')
+    const heightEl = document.getElementById('height')
+    const weightEl = document.getElementById('weight')
+    const activityEl = document.getElementById('activity')
+    const stressEl = document.getElementById('stress')
+    const stressValueEl = document.getElementById('stressValue')
+    const macroProteinEl = document.getElementById('macroProtein')
+    const macroFatEl = document.getElementById('macroFat')
+    const macroCarbEl = document.getElementById('macroCarb')
+    const macroProteinLabelEl = document.getElementById('macroProteinLabel')
+    const macroFatLabelEl = document.getElementById('macroFatLabel')
+    const macroCarbLabelEl = document.getElementById('macroCarbLabel')
+    const macroTotalEl = document.getElementById('macroTotal')
+    const modeInputs = () => Array.from(document.querySelectorAll('input[name="mode"]'))
+    const macroModeAutoProfileEl = document.getElementById('macroModeAutoProfile')
+    const macroModeCustomProfileEl = document.getElementById('macroModeCustomProfile')
+    const macroCustomSectionProfileEl = document.getElementById('macroCustomSectionProfile')
+    const macroProteinProfileEl = document.getElementById('macroProteinProfile')
+    const macroFatProfileEl = document.getElementById('macroFatProfile')
+    const macroCarbProfileEl = document.getElementById('macroCarbProfile')
+    const macroProteinProfileLabelEl = document.getElementById('macroProteinProfileLabel')
+    const macroFatProfileLabelEl = document.getElementById('macroFatProfileLabel')
+    const macroCarbProfileLabelEl = document.getElementById('macroCarbProfileLabel')
+    const macroTotalProfileEl = document.getElementById('macroTotalProfile')
+    let W = 0, H = 0
+    function resize() {
+      const dpr = Math.max(1, window.devicePixelRatio || 1)
+      const w = window.innerWidth
+      const h = window.innerHeight
+      canvas.style.width = w + 'px'
+      canvas.style.height = h + 'px'
+      canvas.width = Math.floor(w * dpr)
+      canvas.height = Math.floor(h * dpr)
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
+      W = w; H = h
+    }
+    resize()
+    window.addEventListener('resize', resize)
+    const keys = {}
+    window.addEventListener('keydown', e => { keys[e.code] = true })
+    window.addEventListener('keyup', e => { keys[e.code] = false })
+    const isTouchDevice = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0
+    function clamp(v, a, b) { return Math.max(a, Math.min(b, v)) }
+    function rand(a,b){ return a + Math.random()*(b-a) }
+    function dist(ax,ay,bx,by){ const dx=ax-bx, dy=ay-by; return Math.hypot(dx,dy) }
+    function showToast(msg, type='error', timeoutMs=2800){
+      if (!toastEl) return alert(msg)
+      const div = document.createElement('div')
+      div.className = 'toast-msg ' + (type||'error')
+      div.textContent = msg
+      toastEl.appendChild(div)
+      setTimeout(() => {
+        div.style.opacity = '0'
+        div.style.transform = 'translateY(-6px)'
+        setTimeout(() => { div.remove() }, 400)
+      }, timeoutMs)
+    }
+    function lifeGainEffect(x,y){
+      const cols = [
+        'rgba(255,224,170,.95)',
+        'rgba(255,248,230,.95)',
+        'rgba(140,182,92,.95)',
+        'rgba(62,120,64,.95)',
+        'rgba(255,210,210,.95)'
+      ]
+      for (let k=0;k<64;k++){
+        const col = cols[Math.floor(Math.random()*cols.length)]
+        state.particles.push({
+          x, y,
+          vx: rand(-260,260),
+          vy: rand(-320,80),
+          life: rand(0.45,1.05),
+          r: rand(2,5),
+          color: col
+        })
+      }
+    }
+    let prevSpace = false
+    const PANEL_TEXT_COLOR = (getComputedStyle(document.documentElement).getPropertyValue('--text') || '#eef2ff').trim()
+    const FOOD_GROUPS = [
+      { key:'Grains',        label:'Grains', color:'#b38a3a' },
+      { key:'Proteins',      label:'Beans, Fish, Eggs, and Meat（low-fat）', color:'#3b8a5a' },
+      { key:'Dairy',         label:'Dairy', color:'#6b86c4' },
+      { key:'Vegetables',    label:'Vegetables', color:'#3f8fb3' },
+      { key:'Fruits',        label:'Fruits', color:'#b36b3a' },
+      { key:'Oils and Nuts', label:'Oils and Nuts', color:'#a4637a' }
+    ]
+    function labelOf(key){
+      const f = FOOD_GROUPS.find(g=>g.key===key)
+      return f ? (f.label || f.key) : key
+    }
+    function halfRound(n){ return Math.round(n*2)/2 }
+    function colorOf(key){ const f = FOOD_GROUPS.find(g=>g.key===key); return f ? f.color : '#1e3a8a' }
+    function computeEnergy(sex, age, heightCm, weightKg, activity, stress){
+      const BEE = sex === 'male'
+        ? 66 + 13.7*weightKg + 5*heightCm - 6.8*age
+        : 655 + 9.6*weightKg + 1.8*heightCm - 4.7*age
+      return BEE * activity * stress
+    }
+    function computeTargetsTaiwan(kcal, macroOverride, macroSource){
+      const macroTarget = macroOverride && isFinite(macroOverride.cPct) && isFinite(macroOverride.pPct) && isFinite(macroOverride.fPct)
+        ? macroOverride
+        : { cPct: 55, pPct: 20, fPct: 25 }
+      const macroStrict = macroSource === 'custom'
+      const carbTargetG = (kcal * (macroTarget.cPct/100)) / 4
+      const proteinTargetG = (kcal * (macroTarget.pPct/100)) / 4
+      const fatTargetG = (kcal * (macroTarget.fPct/100)) / 9
+      const FOOD = {
+        grains: { c:15, p:2, f:0, kcal:70 },
+        fruit: { c:15, p:0, f:0, kcal:60 },
+        veg: { c:5, p:1, f:0, kcal:25 },
+        proteinLow: { c:0, p:7, f:3, kcal:55 },
+        oil: { c:0, p:0, f:5, kcal:45 },
+        dairyLow: { c:12, p:8, f:4, kcal:120 },
+      }
+      let fruits = 2
+      if (kcal >= 2000 && kcal < 2200) fruits = 3
+      else if (kcal >= 2200 && kcal < 2500) fruits = 3.5
+      else if (kcal >= 2500) fruits = 4
+      fruits = clamp(halfRound(fruits), 2, 4)
+      let vegetables = 3
+      if (kcal >= 2000 && kcal <= 2200) vegetables = 4
+      else if (kcal >= 2500) vegetables = 5
+      vegetables = clamp(halfRound(vegetables), 3, 5)
+      let dairyServings = kcal >= 2700 ? 2 : 1.5
+      dairyServings = clamp(halfRound(dairyServings), 1, 2)
+      const defaultMins = { grains:10, proteins:4, dairy:1, veg:3, fruit:2, oils:3 }
+      const mins = macroStrict
+        ? { grains:0, proteins:0, dairy:0, veg:0, fruit:0, oils:0 }
+        : defaultMins
+      const recommended = {
+        grains:[10,20], proteins:[4,8], dairy:[1,2], veg:[3,5], fruit:[2,4], oils:[3,7]
+      }
+      function totals(x1,x2,x3,x4,x5,x6){
+        const carbsG = x1*FOOD.grains.c + x3*FOOD.dairyLow.c + x4*FOOD.veg.c + x5*FOOD.fruit.c
+        const proteinG = x1*FOOD.grains.p + x2*FOOD.proteinLow.p + x3*FOOD.dairyLow.p + x4*FOOD.veg.p
+        const fatG = x2*FOOD.proteinLow.f + x3*FOOD.dairyLow.f + x6*FOOD.oil.f
+        const cE = carbsG*4, pE = proteinG*4, fE = fatG*9
+        const totalE = cE+pE+fE
+        const cPct = totalE? cE/totalE*100 : 0
+        const pPct = totalE? pE/totalE*100 : 0
+        const fPct = totalE? fE/totalE*100 : 0
+        return { carbsG, proteinG, fatG, totalE, cPct, pPct, fPct }
+      }
+      function feasible(x1,x2,x3,x4,x5,x6){
+        return x1>=0 && x2>=0 && x3>=0 && x4>=0 && x5>=0 && x6>=0
+      }
+      function obj(x1,x2,x3,x4,x5,x6){
+        const t = totals(x1,x2,x3,x4,x5,x6)
+        const dE = t.totalE - kcal
+        const energyErr = dE*dE
+        const ec = t.carbsG - carbTargetG
+        const ep = t.proteinG - proteinTargetG
+        const ef = t.fatG - fatTargetG
+        const macroErr = ec*ec + ep*ep + ef*ef
+        function rangePenalty(x,[lo,hi]){
+          if (x < lo) return (lo - x) * (lo - x)
+          if (x > hi) return (x - hi) * (x - hi)
+          return 0
+        }
+        const recPen =
+          rangePenalty(x1, recommended.grains) +
+          rangePenalty(x2, recommended.proteins) +
+          rangePenalty(x3, recommended.dairy) +
+          rangePenalty(x4, recommended.veg) +
+          rangePenalty(x5, recommended.fruit) +
+          rangePenalty(x6, recommended.oils)
+        const recWeight = macroStrict ? 0.0 : 0.2
+        return energyErr + macroErr*0.2 + recPen*recWeight
+      }
+      const baseGrains = halfRound(Math.max(mins.grains, (carbTargetG - (dairyServings*FOOD.dairyLow.c + vegetables*FOOD.veg.c + fruits*FOOD.fruit.c)) / FOOD.grains.c))
+      const baseProteins = halfRound(Math.max(mins.proteins, (proteinTargetG - (dairyServings*FOOD.dairyLow.p + vegetables*FOOD.veg.p + baseGrains*FOOD.grains.p)) / FOOD.proteinLow.p))
+      const baseOils = halfRound(Math.max(mins.oils, (fatTargetG - (dairyServings*FOOD.dairyLow.f + baseProteins*FOOD.proteinLow.f)) / FOOD.oil.f))
+      let best = { x1:baseGrains, x2:baseProteins, x3:dairyServings, x4:vegetables, x5:fruits, x6:baseOils, s: Infinity }
+      const steps = [ -4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4,5,6 ]
+      const small = [ -1,-0.5,0,0.5,1 ]
+      const epsKcal = Math.max(1, kcal * 0.005)
+      for (const dg of steps){
+        for (const dp of steps){
+          for (const doil of steps){
+            for (const dv of small){
+              for (const dr of small){
+                const g = halfRound(Math.max(mins.grains, baseGrains + dg))
+                const p = halfRound(Math.max(mins.proteins, baseProteins + dp))
+                const o = halfRound(Math.max(mins.oils, baseOils + doil))
+                const v = halfRound(Math.max(mins.veg, vegetables + dv))
+                const r = halfRound(Math.max(mins.fruit, fruits + dr))
+                const d = dairyServings
+                if (!feasible(g,p,d,v,r,o)) continue
+                const t = totals(g,p,d,v,r,o)
+                const eDiff = Math.abs(t.totalE - kcal)
+                const mDiff = Math.abs(t.cPct - macroTarget.cPct) + Math.abs(t.pPct - macroTarget.pPct) + Math.abs(t.fPct - macroTarget.fPct)
+                const s = obj(g,p,d,v,r,o)
+                if (best.s === Infinity){
+                  best = { x1:g, x2:p, x3:d, x4:v, x5:r, x6:o, s, e:eDiff, m:mDiff }
+                } else {
+                  if (eDiff < best.e - epsKcal || (Math.abs(eDiff - best.e) <= epsKcal && mDiff < best.m - 0.01) || (Math.abs(eDiff - best.e) <= epsKcal && Math.abs(mDiff - best.m) <= 0.01 && s < best.s)){
+                    best = { x1:g, x2:p, x3:d, x4:v, x5:r, x6:o, s, e:eDiff, m:mDiff }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+      let adjustments = []
+      if (!macroStrict){
+        if (best.x6 < 3) { best.x6 = 3; adjustments.push('Raised oils to minimum 3 servings') }
+        if (best.x4 !== vegetables) adjustments.push('Adjusted vegetables within range to reduce energy gap')
+        if (best.x5 !== fruits) adjustments.push('Adjusted fruits within range to reduce energy gap')
+      }
+      const tfin = totals(best.x1,best.x2,best.x3,best.x4,best.x5,best.x6)
+      const rr = v => Math.round(v*2)/2
+      return {
+        kcal,
+        targets: {
+          'Grains': rr(best.x1),
+          'Proteins': rr(best.x2),
+          'Dairy': rr(best.x3),
+          'Vegetables': rr(best.x4),
+          'Fruits': rr(best.x5),
+          'Oils and Nuts': rr(best.x6),
+        },
+        macros: {
+          carbsG: Math.round(tfin.carbsG*10)/10,
+          proteinG: Math.round(tfin.proteinG*10)/10,
+          fatG: Math.round(tfin.fatG*10)/10,
+          totalKcal: Math.round(tfin.totalE),
+          carbsPct: Math.round(tfin.cPct*10)/10,
+          proteinPct: Math.round(tfin.pPct*10)/10,
+          fatPct: Math.round(tfin.fPct*10)/10,
+        },
+        adjustments,
+        assumptions: {
+          dairyType: 'low-fat',
+          proteinType: 'low-fat',
+          macroTarget,
+          macroSource: macroSource || 'auto',
+        }
+      }
+    }
+    function targetsForEnergy(kcal, macroTarget, macroSource){
+      return computeTargetsTaiwan(kcal, macroTarget, macroSource)
+    }
+    function updateMacroLabels(){
+      const p = Math.round(+macroProteinEl.value)
+      const f = Math.round(+macroFatEl.value)
+      const c = Math.round(+macroCarbEl.value)
+      macroProteinLabelEl.textContent = p + '%'
+      macroFatLabelEl.textContent = f + '%'
+      macroCarbLabelEl.textContent = c + '%'
+      const total = p + f + c
+      const remain = Math.max(0, 100 - total)
+      macroTotalEl.textContent = `Total: ${total}% (Remaining ${remain}%)`
+    }
+    function enforceMacroSum(e){
+      const src = e.target.id
+      let p = +macroProteinEl.value
+      let f = +macroFatEl.value
+      let c = +macroCarbEl.value
+      function clampToRemaining(current, other1, other2, min, max){
+        const remaining = 100 - (other1 + other2)
+        const desired = current
+        const capped = Math.min(desired, Math.max(min, remaining))
+        return Math.max(min, Math.min(max, capped))
+      }
+      if (src === 'macroProtein'){
+        p = clampToRemaining(p, f, c, +macroProteinEl.min, +macroProteinEl.max)
+        macroProteinEl.value = Math.round(p)
+      } else if (src === 'macroFat'){
+        f = clampToRemaining(f, p, c, +macroFatEl.min, +macroFatEl.max)
+        macroFatEl.value = Math.round(f)
+      } else if (src === 'macroCarb'){
+        c = clampToRemaining(c, p, f, +macroCarbEl.min, +macroCarbEl.max)
+        macroCarbEl.value = Math.round(c)
+      }
+      updateMacroLabels()
+    }
+    ;['input','change'].forEach(ev=>{
+      macroProteinEl.addEventListener(ev, enforceMacroSum)
+      macroFatEl.addEventListener(ev, enforceMacroSum)
+      macroCarbEl.addEventListener(ev, enforceMacroSum)
+    })
+    updateMacroLabels()
+    modeInputs().forEach(i=> i.addEventListener('change', updateMacroLabels))
+    function updateMacroLabelsProfile(){
+      const p = Math.round(+macroProteinProfileEl.value)
+      const f = Math.round(+macroFatProfileEl.value)
+      const c = Math.round(+macroCarbProfileEl.value)
+      macroProteinProfileLabelEl.textContent = p + '%'
+      macroFatProfileLabelEl.textContent = f + '%'
+      macroCarbProfileLabelEl.textContent = c + '%'
+      const total = p + f + c
+      const remain = Math.max(0, 100 - total)
+      macroTotalProfileEl.textContent = `Total: ${total}% (Remaining ${remain}%)`
+    }
+    function enforceMacroSumProfile(e){
+      const src = e.target.id
+      let p = +macroProteinProfileEl.value
+      let f = +macroFatProfileEl.value
+      let c = +macroCarbProfileEl.value
+      function clampToRemaining(current, other1, other2, min, max){
+        const remaining = 100 - (other1 + other2)
+        const desired = current
+        const capped = Math.min(desired, Math.max(min, remaining))
+        return Math.max(min, Math.min(max, capped))
+      }
+      if (src === 'macroProteinProfile'){
+        p = clampToRemaining(p, f, c, +macroProteinProfileEl.min, +macroProteinProfileEl.max)
+        macroProteinProfileEl.value = Math.round(p)
+      } else if (src === 'macroFatProfile'){
+        f = clampToRemaining(f, p, c, +macroFatProfileEl.min, +macroFatProfileEl.max)
+        macroFatProfileEl.value = Math.round(f)
+      } else if (src === 'macroCarbProfile'){
+        c = clampToRemaining(c, p, f, +macroCarbProfileEl.min, +macroCarbProfileEl.max)
+        macroCarbProfileEl.value = Math.round(c)
+      }
+      updateMacroLabelsProfile()
+    }
+    ;['input','change'].forEach(ev=>{
+      macroProteinProfileEl && macroProteinProfileEl.addEventListener(ev, enforceMacroSumProfile)
+      macroFatProfileEl && macroFatProfileEl.addEventListener(ev, enforceMacroSumProfile)
+      macroCarbProfileEl && macroCarbProfileEl.addEventListener(ev, enforceMacroSumProfile)
+    })
+    function updateMacroModeProfileUI(){
+      const useCustom = macroModeCustomProfileEl && macroModeCustomProfileEl.checked
+      if (macroCustomSectionProfileEl){
+        macroCustomSectionProfileEl.classList.toggle('active', !!useCustom)
+      }
+      updateMacroLabelsProfile()
+    }
+    macroModeAutoProfileEl && macroModeAutoProfileEl.addEventListener('change', updateMacroModeProfileUI)
+    macroModeCustomProfileEl && macroModeCustomProfileEl.addEventListener('change', updateMacroModeProfileUI)
+    updateMacroModeProfileUI()
+    updateMacroLabelsProfile()
+    const state = {
+      running: false,
+      paused: false,
+      level: 1,
+      time: 0,
+      player: { x: W*0.5, y: H*0.8, r: 16, s: 280, fireCd: 0, fireRate: 0.12, hitCd: 0, face: 1, lean: 0, shakeT: 0, shakeD: 0.18, shakeAmp: 6, moving: false },
+      bullets: [],
+      circles: [],
+      particles: [],
+      stars: [],
+      dust: [],
+      nebula: [],
+      touch: { active: false, x: 0, y: 0, id: null, shooting: false },
+      lives: 5,
+      energyKcal: 0,
+      targets: {},
+      consumed: {},
+      spawnCounts: {},
+    }
+    for (const n of FOOD_GROUPS){ state.consumed[n.key] = 0; state.spawnCounts[n.key] = 0 }
+    function setMobileControlsVisible(on){
+      if (!mobileControlsEl) return
+      mobileControlsEl.style.display = on ? 'flex' : 'none'
+    }
+    function updateControlsHint(){
+      if (!controlsHintEl) return
+      if (isTouchDevice){
+        controlsHintEl.innerHTML = `Move: Drag anywhere<br>Shoot: Hold “Shoot”<br>Pause: “Pause” button`
+      } else {
+        controlsHintEl.innerHTML = `Move: WASD / Arrow keys<br>Shoot: Space<br>Pause / Exit: ESC`
+      }
+    }
+    updateControlsHint()
+    if (isTouchDevice){
+      const posFromEvent = (e) => {
+        const r = canvas.getBoundingClientRect()
+        return { x: e.clientX - r.left, y: e.clientY - r.top }
+      }
+      canvas.addEventListener('pointerdown', e => {
+        if (setup.style.display !== 'none') return
+        if (!state.running) return
+        if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return
+        const p = posFromEvent(e)
+        state.touch.active = true
+        state.touch.id = e.pointerId
+        state.touch.x = p.x
+        state.touch.y = p.y
+        try { canvas.setPointerCapture(e.pointerId) } catch {}
+      }, { passive: true })
+      canvas.addEventListener('pointermove', e => {
+        if (!state.touch.active) return
+        if (state.touch.id !== e.pointerId) return
+        const p = posFromEvent(e)
+        state.touch.x = p.x
+        state.touch.y = p.y
+      }, { passive: true })
+      const endTouch = (e) => {
+        if (state.touch.id !== e.pointerId) return
+        state.touch.active = false
+        state.touch.id = null
+      }
+      canvas.addEventListener('pointerup', endTouch, { passive: true })
+      canvas.addEventListener('pointercancel', endTouch, { passive: true })
+      if (pauseTouchBtn){
+        pauseTouchBtn.addEventListener('pointerdown', e => {
+          e.preventDefault()
+          if (setup.style.display !== 'none') return
+          togglePause()
+        })
+      }
+      if (shootTouchBtn){
+        shootTouchBtn.addEventListener('pointerdown', e => {
+          if (setup.style.display !== 'none') return
+          if (!state.running) return
+          e.preventDefault()
+          state.touch.shooting = true
+          shoot()
+        })
+        const stopShoot = (e) => {
+          e.preventDefault()
+          state.touch.shooting = false
+        }
+        shootTouchBtn.addEventListener('pointerup', stopShoot)
+        shootTouchBtn.addEventListener('pointercancel', stopShoot)
+        shootTouchBtn.addEventListener('pointerleave', stopShoot)
+      }
+    }
+    function reset(){
+      state.running = true
+      state.time = 0
+      state.player.x = W*0.5
+      state.player.y = H*0.8
+      state.player.hitCd = 0
+      state.player.face = 1
+      state.player.lean = 0
+      state.player.shakeT = 0
+      state.player.moving = false
+      state.touch.active = false
+      state.touch.id = null
+      state.touch.shooting = false
+      state.bullets = []
+      state.circles = []
+      state.particles = []
+      state.stars = []
+      state.dust = []
+      state.nebula = []
+      state.lives = 5
+      const starCount = Math.max(120, Math.floor(W*H/12000))
+      for (let i=0;i<starCount;i++){
+        state.stars.push({ x: rand(20,W-20), y: rand(20,H-20), r: rand(0.6,1.8), tw: rand(0.8,1.6), a: rand(0.4,1) })
+      }
+      for (let i=0;i<4;i++){
+        state.nebula.push({
+          x: rand(W*0.12, W*0.88),
+          y: rand(H*0.10, H*0.70),
+          r: rand(Math.min(W,H)*0.14, Math.min(W,H)*0.28),
+          a: rand(0.08, 0.16),
+          c: Math.random() < 0.5 ? 'rgba(140,182,92,1)' : 'rgba(76,125,255,1)'
+        })
+      }
+      const dustCount = Math.max(220, Math.floor(W*H/5200))
+      for (let i=0;i<dustCount;i++){
+        const warm = Math.random() < 0.55
+        state.dust.push({
+          x: rand(0, W),
+          y: rand(0, H),
+          r: rand(0.35, 1.25),
+          a: rand(0.04, 0.14),
+          tw: rand(0.6, 1.4),
+          c: warm ? 'rgba(255,248,230,1)' : 'rgba(160,220,255,1)'
+        })
+      }
+      for (const n of FOOD_GROUPS){ state.consumed[n.key] = 0; state.spawnCounts[n.key] = 0 }
+      overlay.style.display = 'none'
+      nextBtn.style.display = 'none'
+      state.player.r = 16
+      livesEl.textContent = 'Lives ' + state.lives
+      setMobileControlsVisible(isTouchDevice)
+    }
+    restartBtn.addEventListener('click', reset)
+    function showEndOverlay(){
+      if (endPanel) endPanel.style.display = 'block'
+      if (controlsPanel) controlsPanel.style.display = 'none'
+      overlay.style.display = 'flex'
+      setMobileControlsVisible(false)
+    }
+    function showControlsOverlay(){
+      if (endPanel) endPanel.style.display = 'none'
+      if (controlsPanel) controlsPanel.style.display = 'block'
+      overlay.style.display = 'flex'
+      updateControlsHint()
+      setMobileControlsVisible(false)
+    }
+    function togglePause(){
+      if (setup.style.display !== 'none') return
+      if (!state.paused){
+        state.paused = true
+        state.running = false
+        document.getElementById('gameover').textContent = 'Paused'
+        restartBtn.style.display = 'none'
+        nextBtn.style.display = 'none'
+        pauseContinueBtn.style.display = 'inline-block'
+        pauseExitBtn.style.display = 'inline-block'
+        showEndOverlay()
+      } else {
+        state.paused = false
+        state.running = true
+        overlay.style.display = 'none'
+        pauseContinueBtn.style.display = 'none'
+        pauseExitBtn.style.display = 'none'
+        setMobileControlsVisible(isTouchDevice)
+      }
+    }
+    window.addEventListener('keydown', e => {
+      if (e.code === 'Escape'){
+        if (overlay.style.display === 'flex' && controlsPanel && controlsPanel.style.display !== 'none'){
+          overlay.style.display = 'none'
+          return
+        }
+        togglePause()
+      }
+    })
+    pauseContinueBtn.addEventListener('click', () => togglePause())
+    pauseExitBtn.addEventListener('click', () => {
+      state.paused = false
+      state.running = false
+      overlay.style.display = 'none'
+      pauseContinueBtn.style.display = 'none'
+      pauseExitBtn.style.display = 'none'
+      setup.style.display = 'flex'
+      setMobileControlsVisible(false)
+    })
+    const pending = { mode: 'target', kcal: 0, targets: null, energyLabel: 'Target Energy', formulaText: '' }
+    function showStep(step){
+      stepInputEl.classList.toggle('active', step === 'input')
+      stepEnergyEl.classList.toggle('active', step === 'energy')
+      stepPortionsEl.classList.toggle('active', step === 'portions')
+      if (step === 'input') setupSubtitleEl.textContent = 'Choose a mode to compute today’s targets'
+      if (step === 'energy') setupSubtitleEl.textContent = 'Confirm the computed energy'
+      if (step === 'portions') setupSubtitleEl.textContent = 'Confirm today’s portion targets'
+    }
+    function updateModeUI(){
+      const mode = modeInputs().find(i=>i.checked)?.value || 'target'
+      document.getElementById('targetSection').classList.toggle('active', mode==='target')
+      document.getElementById('profileSection').classList.toggle('active', mode==='profile')
+    }
+    function updateStressUI(){
+      const v = stressEl.value
+      const ranges = {
+        ventilator: { min:1.2, max:1.5, step:0.01, def:1.2 },
+        sepsis: { min:1.4, max:1.8, step:0.01, def:1.4 },
+        burns: { min:1.7, max:2.2, step:0.01, def:1.7 },
+      }
+      if (v in ranges){
+        const r = ranges[v]
+        stressValueEl.style.display = 'inline-block'
+        stressValueEl.min = String(r.min)
+        stressValueEl.max = String(r.max)
+        stressValueEl.step = String(r.step)
+        if (!isFinite(+stressValueEl.value)) stressValueEl.value = String(r.def)
+      } else {
+        stressValueEl.style.display = 'none'
+      }
+    }
+    function renderPortionReview(result){
+      const targets = result.targets || result
+      const html = []
+      for (const n of FOOD_GROUPS){
+        const tar = targets[n.key] ?? 0
+        html.push(`<label><span>${n.label} (servings)</span><input value="${tar}" readonly></label>`)
+      }
+      portionReviewEl.innerHTML = html.join('')
+      const dairyType = result?.assumptions?.dairyType || 'low'
+      const dairy = dairyType === 'skim'
+        ? { c:12, p:8, f:0, kcal:80, label:'Dairy (skim)' }
+        : dairyType === 'full'
+          ? { c:12, p:8, f:8, kcal:150, label:'Dairy (full-fat)' }
+          : { c:12, p:8, f:4, kcal:120, label:'Dairy (low-fat)' }
+      const per = {
+        'Fruits': { c:15, p:0, f:0, kcal:60, label:'Fruits' },
+        'Vegetables': { c:5, p:1, f:0, kcal:25, label:'Vegetables' },
+        'Dairy': { ...dairy },
+        'Grains': { c:15, p:2, f:0, kcal:70, label:'Grains' },
+        'Proteins': { c:0, p:7, f:3, kcal:55, label:'Beans, Fish, Eggs, and Meat（low-fat）' },
+        'Oils and Nuts': { c:0, p:0, f:5, kcal:45, label:'Oils and Nuts' },
+      }
+      const sum = { servings:0, c:0, p:0, f:0, kcal:0 }
+      const rows = []
+      for (const n of FOOD_GROUPS){
+        const s = +((targets[n.key] ?? 0) || 0)
+        const m = per[n.key] || { c:0, p:0, f:0, kcal:0, label:n.key }
+        const tc = s*m.c
+        const tp = s*m.p
+        const tf = s*m.f
+        const tk = s*m.kcal
+        sum.servings += s
+        sum.c += tc
+        sum.p += tp
+        sum.f += tf
+        sum.kcal += tk
+        rows.push({ key:n.key, label:m.label, s, m, tc, tp, tf, tk })
+      }
+      const fmt = v => (Math.round(v*10)/10).toFixed(1).replace(/\.0$/,'')
+      const tableHtml = [
+        `<table class="tbl">`,
+        `<thead><tr><th>Food Group</th><th class="num">Servings</th><th>Per serving (C/P/F)</th><th class="num">Total C (g)</th><th class="num">Total P (g)</th><th class="num">Total F (g)</th></tr></thead>`,
+        `<tbody>`,
+        ...rows.map(r=>`<tr><td>${r.label}</td><td class="num">${fmt(r.s)}</td><td>${fmt(r.m.c)}/${fmt(r.m.p)}/${fmt(r.m.f)} g</td><td class="num">${fmt(r.tc)}</td><td class="num">${fmt(r.tp)}</td><td class="num">${fmt(r.tf)}</td></tr>`),
+        `<tr><td><strong>Total</strong></td><td class="num"></td><td></td><td class="num"><strong>${fmt(sum.c)}</strong></td><td class="num"><strong>${fmt(sum.p)}</strong></td><td class="num"><strong>${fmt(sum.f)}</strong></td></tr>`,
+        `</tbody></table>`
+      ].join('')
+      breakdownTableEl.innerHTML = tableHtml
+      if (result.macros){
+        const src = result?.assumptions?.macroSource
+        const mt = result?.assumptions?.macroTarget
+        let txt = `Typical guideline : Protein 10–20%, Fat 20–30%, Carbs 50–60%`
+        if (src === 'custom' && mt){
+          txt += `\nYour setting: Protein ${mt.pPct}%, Fat ${mt.fPct}%, Carbs ${mt.cPct}%`
+        }
+        txt += `\n\nCarbs: ${result.macros.carbsG} g (${result.macros.carbsPct}%)\nProtein: ${result.macros.proteinG} g (${result.macros.proteinPct}%)\nFat: ${result.macros.fatG} g (${result.macros.fatPct}%)\n\nEstimated total from macros: ${result.macros.totalKcal} kcal`
+        macroReviewEl.textContent = txt
+      } else {
+        macroReviewEl.textContent = ''
+      }
+    }
+    function buildEnergyFormulaText({ sex, age, height, weight, activity, stress, bee, kcal }){
+      const base = sex === 'male'
+        ? `BEE = 66 + 13.7×Weight + 5×Height − 6.8×Age\n= 66 + 13.7×${weight} + 5×${height} − 6.8×${age}\n= ${bee.toFixed(1)}`
+        : `BEE = 655 + 9.6×Weight + 1.8×Height − 4.7×Age\n= 655 + 9.6×${weight} + 1.8×${height} − 4.7×${age}\n= ${bee.toFixed(1)}`
+      return `${base}\n\nTotal Energy = BEE × Activity × Stress\n= ${bee.toFixed(1)} × ${activity} × ${stress}\n= ${kcal.toFixed(1)} kcal`
+    }
+    modeInputs().forEach(i=> i.addEventListener('change', updateModeUI))
+    updateModeUI()
+    showStep('input')
+    stressEl.addEventListener('change', updateStressUI)
+    updateStressUI()
+    nextFromInputBtn.addEventListener('click', () => {
+      const age = +ageEl.value
+      const sex = sexEl.value
+      const height = +heightEl.value
+      const weight = +weightEl.value
+      const activity = +activityEl.value
+      let stressSel = stressEl.value
+      let stress = parseFloat(stressSel)
+      if (!isFinite(stress)){
+        const ranges = {
+          ventilator: { min:1.2, max:1.5 },
+          sepsis: { min:1.4, max:1.8 },
+          burns: { min:1.7, max:2.2 },
+        }
+        const r = ranges[stressSel]
+        const sv = +stressValueEl.value
+        if (!r || !isFinite(sv) || sv < r.min || sv > r.max){
+          showToast('Please enter a Stress Factor value within the allowed range','error')
+          return
+        }
+        stress = sv
+      }
+      const mode = modeInputs().find(i=>i.checked)?.value || 'target'
+      pending.mode = mode
+      if (mode === 'target'){
+        const override = +document.getElementById('kcal').value
+        if (!isFinite(override) || override <= 0){ showToast('Please enter a valid target energy','error'); return }
+        let pPct = +macroProteinEl.value, fPct = +macroFatEl.value, cPct = +macroCarbEl.value
+        if (!isFinite(pPct) || !isFinite(fPct) || !isFinite(cPct) || pPct <= 0 || fPct <= 0 || cPct <= 0){ showToast('Please enter valid macro percentages for Protein/Fat/Carbs','error'); return }
+        const sumPct = Math.round((pPct + fPct + cPct)*10)/10
+        if (sumPct !== 100){ showToast('Macros must sum to 100%','error'); return }
+        pending.kcal = Math.round(override)
+        pending.energyLabel = 'Target Energy'
+        pending.macroTarget = { cPct: cPct, pPct: pPct, fPct: fPct }
+        pending.result = targetsForEnergy(pending.kcal, pending.macroTarget, 'custom')
+        pending.targets = pending.result.targets
+        portionEnergyValueEl.textContent = `${pending.energyLabel}: ${pending.kcal} kcal`
+        renderPortionReview(pending.result)
+        showStep('portions')
+        return
+      }
+      function validNum(v,min){ return isFinite(v) && v >= min }
+      if (!validNum(age,1) || !validNum(height,50) || !validNum(weight,10)){
+        showToast('Please complete all profile fields correctly','error')
+        return
+      }
+      const bee = sex === 'male'
+        ? 66 + 13.7*weight + 5*height - 6.8*age
+        : 655 + 9.6*weight + 1.8*height - 4.7*age
+      const kcal = bee * activity * stress
+      pending.kcal = kcal
+      pending.energyLabel = 'Estimated Energy'
+      pending.formulaText = buildEnergyFormulaText({ sex, age, height, weight, activity, stress, bee, kcal })
+      energyReviewValueEl.textContent = `${pending.energyLabel}: ${pending.kcal} kcal`
+      energyFormulaEl.textContent = pending.formulaText
+      showStep('energy')
+    })
+    backToInputFromEnergyBtn.addEventListener('click', () => showStep('input'))
+    nextToPortionsFromEnergyBtn.addEventListener('click', () => {
+      let macroTarget = { cPct: 55, pPct: 20, fPct: 25 }
+      const macroMode = (document.querySelector('input[name="macroModeProfile"]:checked')?.value) || 'auto'
+      if (macroMode === 'custom'){
+        let pPct = +macroProteinProfileEl.value, fPct = +macroFatProfileEl.value, cPct = +macroCarbProfileEl.value
+        const sumPct = Math.round((pPct + fPct + cPct)*10)/10
+        if (sumPct !== 100){ showToast('Macros must sum to 100%','error'); return }
+        macroTarget = { cPct: cPct, pPct: pPct, fPct: fPct }
+      }
+      pending.macroTarget = macroTarget
+      pending.macroMode = macroMode
+      pending.result = targetsForEnergy(pending.kcal, macroTarget, macroMode)
+      pending.targets = pending.result.targets
+      portionEnergyValueEl.textContent = `${pending.energyLabel}: ${pending.kcal} kcal`
+      renderPortionReview(pending.result)
+      showStep('portions')
+    })
+    backToInputFromPortionsBtn.addEventListener('click', () => showStep('input'))
+    function doStartGame(){
+      state.energyKcal = pending.kcal
+      state.targets = pending.targets || targetsForEnergy(state.energyKcal).targets
+      energyEl.textContent = `${pending.energyLabel} ${state.energyKcal} kcal`
+      setup.style.display = 'none'
+      overlay.style.display = 'none'
+      reset()
+    }
+    startGameBtn.addEventListener('click', () => {
+      showControlsOverlay()
+    })
+    controlsBackBtn.addEventListener('click', () => {
+      overlay.style.display = 'none'
+      setMobileControlsVisible(false)
+    })
+    controlsStartBtn.addEventListener('click', () => {
+      doStartGame()
+    })
+    nextBtn.addEventListener('click', () => {
+      setup.style.display = 'flex'
+      overlay.style.display = 'none'
+      nextBtn.style.display = 'none'
+      pauseContinueBtn.style.display = 'none'
+      pauseExitBtn.style.display = 'none'
+      restartBtn.style.display = 'inline-block'
+      state.running = false
+      state.paused = false
+      setMobileControlsVisible(false)
+      showStep('input')
+    })
+    function spawnNutrition(t){
+      if (t < 1) return
+      const maxActive = 24
+      if (state.circles.length > maxActive) return
+      const interval = 0.45 - Math.min(0.35, (state.level-1)*0.08)
+      if (t % interval < 0.016) {
+        const spawnCount = 1 + (Math.random() < 0.6 ? 1 : 0)
+        for (let s=0; s<spawnCount; s++){
+          ctx.save()
+          ctx.font = 'bold 14px "Zen Maru Gothic", system-ui'
+          const y = -30
+          const speed = rand(110, 200)
+          const counts = { ...state.spawnCounts }
+          const minCount = Math.min(...FOOD_GROUPS.map(n=>counts[n.key]||0))
+          const candidates = FOOD_GROUPS.filter(n=> (counts[n.key]||0) === minCount)
+          const pick = candidates[Math.floor(Math.random()*candidates.length)]
+          const textW = ctx.measureText(labelOf(pick.key)).width
+          const w = Math.max(80, textW + 24)
+          const h = 28
+          const x = rand(w/2 + 40, W - w/2 - 40)
+          ctx.restore()
+          const types = ['cyclops','slime','robot','bug','ghost']
+          const type = types[Math.floor(Math.random()*types.length)]
+          const specialRoll = Math.random()
+          if (specialRoll < 0.06){
+            const c = {
+              x, y, w, h,
+              vx: rand(-60,60), vy: speed,
+              kind: 'powerup',
+              label: 'EXTRA LIFE',
+              phase: rand(0, Math.PI*2), swayAmp: rand(12,28),
+              headR: 12,
+              powerColor: '#b91c1c'
+            }
+            state.circles.push(c)
+          } else {
+            const c = {
+              x, y, w, h,
+              vx: rand(-60,60), vy: speed,
+              key: pick.key, label: labelOf(pick.key), color: pick.color,
+              phase: rand(0, Math.PI*2), skew: rand(-0.25, 0.25),
+              headR: rand(10,16),
+              eyeCount: type==='cyclops' ? 1 : (type==='robot' ? 2 : (Math.random()<0.7 ? 2 : 3)),
+              antenna: Math.random()<0.6 ? 1 : (Math.random()<0.3 ? 2 : 0),
+              swayAmp: rand(12,28),
+              alienColor: ['#b7f0ea','#a0e7e5','#ffd1dc','#c7f5ff','#e3fdfd'][Math.floor(Math.random()*5)],
+              alienType: type
+            }
+            state.circles.push(c)
+            state.spawnCounts[pick.key] = (state.spawnCounts[pick.key]||0) + 1
+          }
+        }
+      }
+    }
+    function shoot(){
+      if (state.player.fireCd > 0) return
+      const b = { x: state.player.x, y: state.player.y - state.player.r, r: 6, vx: 0, vy: -420 }
+      state.bullets.push(b)
+      state.player.fireCd = state.player.fireRate
+    }
+    function update(dt){
+      state.time += dt
+      if (!state.running) return
+      if (setup.style.display !== 'none') return
+      const p = state.player
+      let mx = 0, my = 0
+      if (keys['ArrowLeft']||keys['KeyA']) mx -= 1
+      if (keys['ArrowRight']||keys['KeyD']) mx += 1
+      if (keys['ArrowUp']||keys['KeyW']) my -= 1
+      if (keys['ArrowDown']||keys['KeyS']) my += 1
+      if (state.touch.active){
+        const dx = state.touch.x - p.x
+        const dy = state.touch.y - p.y
+        const d = Math.hypot(dx,dy)
+        if (d > 10){
+          mx = dx
+          my = dy
+        } else {
+          mx = 0
+          my = 0
+        }
+      }
+      const len = Math.hypot(mx,my)||1
+      if (mx < 0) p.face = -1
+      else if (mx > 0) p.face = 1
+      const targetLean = (Math.abs(mx) > 0 ? p.face : 0) * 0.16
+      p.lean = p.lean + (targetLean - p.lean) * Math.min(1, dt * 10)
+      p.x += (mx/len) * p.s * dt
+      p.y += (my/len) * p.s * dt
+      p.x = clamp(p.x, p.r, W-p.r)
+      p.y = clamp(p.y, p.r, H-p.r)
+      if (keys['Space'] && !prevSpace) shoot()
+      prevSpace = !!keys['Space']
+      if (state.touch.shooting) shoot()
+      p.moving = Math.abs(mx) > 0.001 || Math.abs(my) > 0.001
+      if (p.fireCd > 0) p.fireCd = Math.max(0, p.fireCd - dt)
+      if (p.hitCd > 0) p.hitCd = Math.max(0, p.hitCd - dt)
+      if (p.shakeT > 0) p.shakeT = Math.max(0, p.shakeT - dt)
+      for (let i=state.bullets.length-1;i>=0;i--){
+        const b = state.bullets[i]
+        b.x += b.vx*dt
+        b.y += b.vy*dt
+        if (b.y < -20 || b.x < -20 || b.x > W+20) state.bullets.splice(i,1)
+      }
+      spawnNutrition(state.time)
+      for (let i=state.circles.length-1;i>=0;i--){
+        const c = state.circles[i]
+        c.x += c.vx*dt
+        c.y += c.vy*dt
+        c.x += Math.sin(state.time*2 + (c.phase||0)) * (c.swayAmp||0) * dt
+        if (c.y > H+30) state.circles.splice(i,1)
+      }
+      for (let i=state.circles.length-1;i>=0;i--){
+        const c = state.circles[i]
+        for (let j=state.bullets.length-1;j>=0;j--){
+          const b = state.bullets[j]
+          const left = c.x - (c.w||0)/2
+          const right = c.x + (c.w||0)/2
+          const top = c.y - (c.h||0)/2
+          const bottom = c.y + (c.h||0)/2
+          if (b.x >= left && b.x <= right && b.y >= top && b.y <= bottom){
+            state.bullets.splice(j,1)
+            if (c.kind === 'powerup'){
+              state.lives = Math.min(9, state.lives + 1)
+              livesEl.textContent = 'Lives ' + state.lives
+              showToast('Extra life +1', 'info', 1200)
+              lifeGainEffect(c.x, c.y)
+              state.circles.splice(i,1)
+            } else {
+              const key = c.key
+              const before = state.consumed[key]
+              const after = +(before + 0.5).toFixed(1)
+              state.consumed[key] = after
+              const target = state.targets[key]
+              if (after > target){
+                state.running = false
+                showEndOverlay()
+                document.getElementById('gameover').textContent = key + ' exceeded target. Game Over'
+                nextBtn.style.display = 'inline-block'
+              }
+              for (let k=0;k<8;k++){
+                state.particles.push({ x:c.x, y:c.y, vx: rand(-120,120), vy: rand(-120,120), life: rand(0.2,0.6) })
+              }
+              state.circles.splice(i,1)
+            }
+            break
+          }
+        }
+      }
+      for (let i=state.circles.length-1;i>=0;i--){
+        const c = state.circles[i]
+        const left = c.x - (c.w||0)/2
+        const right = c.x + (c.w||0)/2
+        const top = c.y - (c.h||0)/2
+        const bottom = c.y + (c.h||0)/2
+        const dx = (p.x < left) ? left - p.x : (p.x > right) ? p.x - right : 0
+        const dy = (p.y < top) ? top - p.y : (p.y > bottom) ? p.y - bottom : 0
+        const dist2 = dx*dx + dy*dy
+        const pr = p.r*0.8
+        if (dist2 <= pr*pr){
+          if (p.hitCd <= 0){
+            if (c.kind === 'powerup'){
+              state.lives = Math.min(9, state.lives + 1)
+              livesEl.textContent = 'Lives ' + state.lives
+              showToast('Extra life +1', 'info', 1200)
+              lifeGainEffect(p.x, p.y)
+              state.circles.splice(i,1)
+            } else {
+              state.lives = Math.max(0, state.lives - 1)
+              livesEl.textContent = 'Lives ' + state.lives
+              p.hitCd = 1.0
+              p.shakeT = p.shakeD
+              showToast('Life lost!', 'info', 1200)
+              state.circles.splice(i,1)
+              if (state.lives <= 0){
+                state.running = false
+                showEndOverlay()
+                document.getElementById('gameover').textContent = 'No lives left. Game Over'
+                nextBtn.style.display = 'inline-block'
+              }
+            }
+          }
+          break
+        }
+      }
+      for (let i=state.particles.length-1;i>=0;i--){
+        const pz = state.particles[i]
+        pz.x += pz.vx*dt
+        pz.y += pz.vy*dt
+        pz.life -= dt
+        if (pz.life <= 0) state.particles.splice(i,1)
+      }
+      const chips = []
+      for (const n of FOOD_GROUPS){
+        const tar = state.targets[n.key] ?? 0
+        const cur = state.consumed[n.key] ?? 0
+        const pct = tar > 0 ? Math.min(1, cur / tar) : 0
+        const exceeded = cur > tar
+        const col = colorOf(n.key)
+        chips.push(`<div class="chip${exceeded ? ' exceeded' : ''}" style="--chip-color:${col}"><div class="label">${n.label}</div><div class="val">${cur} / ${tar}</div><div class="bar"><div class="fill" style="width:${(pct*100).toFixed(0)}%"></div></div></div>`)
+      }
+      targetsEl.innerHTML = chips.join('')
+      timerEl.textContent = 'Time ' + state.time.toFixed(1) + 's'
+      let allExact = true
+      for (const n of FOOD_GROUPS){
+        const tar = state.targets[n.key]
+        const cur = state.consumed[n.key]
+        if (!isFinite(tar)) { allExact = false; break }
+        if (Math.abs(cur - tar) > 1e-6){ allExact = false; break }
+      }
+      if (allExact){
+        state.running = false
+        showEndOverlay()
+        document.getElementById('gameover').textContent = 'Cleared! Exact servings. Time ' + state.time.toFixed(2) + ' s'
+        nextBtn.style.display = 'inline-block'
+      }
+    }
+    function render(){
+      ctx.clearRect(0,0,W,H)
+      const skyTop = '#0b0f1a'
+      const skyBottom = '#0d1020'
+      const grad = ctx.createLinearGradient(0,0,0,H)
+      grad.addColorStop(0, skyTop)
+      grad.addColorStop(1, skyBottom)
+      ctx.fillStyle = grad
+      ctx.fillRect(0,0,W,H)
+      if (state.nebula.length){
+        ctx.save()
+        ctx.globalCompositeOperation = 'screen'
+        for (const n of state.nebula){
+          const dx = Math.sin(state.time*0.06 + n.y*0.002) * 10
+          const dy = Math.cos(state.time*0.05 + n.x*0.002) * 8
+          const x = n.x + dx
+          const y = n.y + dy
+          const a = n.a || 0.12
+          const col = (n.c || 'rgba(140,182,92,1)').replace(/,1\)$/, `,${a})`)
+          for (let k=0;k<6;k++){
+            const rr = n.r * (0.28 + prand(n.x*0.013 + n.y*0.017 + k*3.1) * 0.42)
+            const ox = (prand(n.x*0.019 + n.y*0.011 + k*7.3)-0.5) * n.r * 0.65
+            const oy = (prand(n.x*0.014 + n.y*0.023 + k*5.9)-0.5) * n.r * 0.55
+            const g = ctx.createRadialGradient(x+ox-rr*0.12, y+oy-rr*0.12, rr*0.1, x+ox, y+oy, rr)
+            g.addColorStop(0, col)
+            g.addColorStop(0.6, col.replace(/,([0-9.]+)\)$/, (m,aa)=>`,` + (parseFloat(aa)*0.38).toFixed(4) + `)`))
+            g.addColorStop(1, 'rgba(0,0,0,0)')
+            ctx.fillStyle = g
+            ctx.beginPath()
+            ctx.arc(x+ox, y+oy, rr, 0, Math.PI*2)
+            ctx.fill()
+          }
+        }
+        ctx.restore()
+      }
+      ctx.save()
+      ctx.globalCompositeOperation = 'screen'
+      ctx.translate(W*0.58, H*0.44)
+      ctx.rotate(-0.32)
+      const bandW = Math.max(W,H) * 1.3
+      const bandH = Math.min(W,H) * 0.28
+      const bandG = ctx.createLinearGradient(0, -bandH, 0, bandH)
+      bandG.addColorStop(0, 'rgba(0,0,0,0)')
+      bandG.addColorStop(0.32, 'rgba(160,220,255,.05)')
+      bandG.addColorStop(0.5, 'rgba(255,248,230,.10)')
+      bandG.addColorStop(0.68, 'rgba(140,182,92,.06)')
+      bandG.addColorStop(1, 'rgba(0,0,0,0)')
+      ctx.fillStyle = bandG
+      ctx.fillRect(-bandW/2, -bandH, bandW, bandH*2)
+      ctx.restore()
+      for (const s of state.stars){
+        const tw = 0.5 + 0.5*Math.sin(state.time * s.tw + s.x*0.01)
+        const dx = Math.sin(state.time*0.12 + s.y*0.003) * 4
+        const dy = Math.cos(state.time*0.08 + s.x*0.003) * 3
+        ctx.fillStyle = `rgba(255,255,255,${Math.min(1, s.a * (0.7 + tw*0.3))})`
+        ctx.beginPath()
+        ctx.arc(s.x + dx, s.y + dy, s.r, 0, Math.PI*2)
+        ctx.fill()
+        ctx.fillStyle = `rgba(160,220,255,${Math.min(0.4, s.a * 0.25)})`
+        ctx.beginPath()
+        ctx.arc(s.x + dx, s.y + dy, s.r*2.2, 0, Math.PI*2)
+        ctx.fill()
+      }
+      if (state.dust.length){
+        ctx.save()
+        ctx.globalCompositeOperation = 'screen'
+        for (const d of state.dust){
+          const tw = 0.5 + 0.5*Math.sin(state.time * d.tw + d.x*0.02 + d.y*0.013)
+          ctx.globalAlpha = (d.a || 0.08) * (0.65 + tw*0.35)
+          ctx.fillStyle = d.c || 'rgba(255,248,230,1)'
+          ctx.beginPath()
+          ctx.arc(d.x, d.y, d.r, 0, Math.PI*2)
+          ctx.fill()
+        }
+        ctx.restore()
+      }
+      const px = W*0.18, py = H*0.28, pr = Math.min(W,H)*0.10
+      const pgrad = ctx.createRadialGradient(px,py,pr*0.2, px,py,pr)
+      pgrad.addColorStop(0,'#3a7bfd')
+      pgrad.addColorStop(0.6,'#2c59b8')
+      pgrad.addColorStop(1,'rgba(42,60,120,.25)')
+      ctx.fillStyle = pgrad
+      ctx.beginPath()
+      ctx.arc(px,py,pr,0,Math.PI*2)
+      ctx.fill()
+      ctx.save()
+      const vign = ctx.createRadialGradient(W*0.5, H*0.45, Math.min(W,H)*0.15, W*0.5, H*0.5, Math.max(W,H)*0.72)
+      vign.addColorStop(0, 'rgba(0,0,0,0)')
+      vign.addColorStop(1, 'rgba(0,0,0,.55)')
+      ctx.fillStyle = vign
+      ctx.fillRect(0,0,W,H)
+      ctx.restore()
+      const p = state.player
+      ctx.save()
+      ctx.translate(p.x, p.y)
+      if (p.shakeT > 0){
+        const n = p.shakeT / (p.shakeD || 0.18)
+        const amp = (p.shakeAmp || 6) * Math.min(1, n)
+        ctx.translate(Math.sin(state.time*92) * amp, Math.cos(state.time*79) * amp * 0.6)
+      }
+      ctx.scale(p.face || 1, 1)
+      ctx.rotate(p.lean || 0)
+      const moving = !!(p.moving || keys['ArrowUp']||keys['KeyW']||keys['ArrowDown']||keys['KeyS']||keys['ArrowLeft']||keys['KeyA']||keys['ArrowRight']||keys['KeyD'])
+      function rrect(x,y,w,h,rad){
+        const r = Math.min(rad, w/2, h/2)
+        ctx.beginPath()
+        ctx.moveTo(x+r, y)
+        ctx.lineTo(x+w-r, y)
+        ctx.quadraticCurveTo(x+w, y, x+w, y+r)
+        ctx.lineTo(x+w, y+h-r)
+        ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h)
+        ctx.lineTo(x+r, y+h)
+        ctx.quadraticCurveTo(x, y+h, x, y+h-r)
+        ctx.lineTo(x, y+r)
+        ctx.quadraticCurveTo(x, y, x+r, y)
+        ctx.closePath()
+      }
+
+      ctx.save()
+      ctx.globalAlpha = 0.35
+      ctx.fillStyle = 'rgba(0,0,0,.35)'
+      ctx.beginPath()
+      ctx.ellipse(0, 26, 14, 6, 0, 0, Math.PI*2)
+      ctx.fill()
+      ctx.restore()
+
+      const ink = 'rgba(60,52,44,.55)'
+      const inkSoft = 'rgba(60,52,44,.38)'
+      const phaseP = state.time * 0.7
+
+      ctx.save()
+      ctx.translate(-14, 4)
+      rrect(-6, -2, 12, 18, 6)
+      const packG = ctx.createLinearGradient(-6, -2, 6, 16)
+      packG.addColorStop(0, 'rgba(252,246,232,.95)')
+      packG.addColorStop(1, 'rgba(190,202,214,.95)')
+      ctx.fillStyle = packG
+      ctx.fill()
+      ctx.fillStyle = 'rgba(255,255,255,.16)'
+      rrect(-5, 0, 10, 14, 5)
+      ctx.fill()
+      strokeTwice(() => rrect(-6, -2, 12, 18, 6), ink, 2.2, Math.sin(phaseP*5.1)*0.7, Math.cos(phaseP*4.7)*0.7, 0.8, 0.45)
+      ctx.restore()
+
+      const bodyGrad = ctx.createLinearGradient(-6, -2, 6, 26)
+      bodyGrad.addColorStop(0, 'rgba(255,250,238,.98)')
+      bodyGrad.addColorStop(0.55, 'rgba(230,236,244,.96)')
+      bodyGrad.addColorStop(1, 'rgba(178,192,210,.96)')
+      ctx.fillStyle = bodyGrad
+      rrect(-12, -2, 24, 28, 11)
+      ctx.fill()
+      strokeTwice(() => rrect(-12, -2, 24, 28, 11), ink, 2.4, Math.sin(phaseP*4.3)*0.7, Math.cos(phaseP*3.9)*0.7, 0.85, 0.5)
+
+      ctx.fillStyle = 'rgba(66,78,84,.14)'
+      rrect(-5.5, 8, 11, 9, 4)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(255,255,255,.30)'
+      rrect(-4.2, 9.5, 8.4, 6.2, 3)
+      ctx.fill()
+      strokeTwice(() => rrect(-5.5, 8, 11, 9, 4), inkSoft, 1.6, Math.sin(phaseP*6.1)*0.5, Math.cos(phaseP*5.7)*0.5, 0.55, 0.35)
+
+      ctx.fillStyle = 'rgba(214,224,232,.96)'
+      ctx.beginPath()
+      ctx.ellipse(-13.5, 9.5, 5.0, 5.6, 0, 0, Math.PI*2)
+      ctx.ellipse(13.5, 9.5, 5.0, 5.6, 0, 0, Math.PI*2)
+      ctx.fill()
+      strokeTwice(() => {
+        ctx.beginPath()
+        ctx.ellipse(-13.5, 9.5, 5.0, 5.6, 0, 0, Math.PI*2)
+        ctx.ellipse(13.5, 9.5, 5.0, 5.6, 0, 0, Math.PI*2)
+      }, inkSoft, 2.0, Math.sin(phaseP*4.9)*0.6, Math.cos(phaseP*4.1)*0.6, 0.65, 0.4)
+
+      ctx.fillStyle = 'rgba(168,184,198,.96)'
+      rrect(-9, 20, 8, 8, 4)
+      ctx.fill()
+      rrect(1, 20, 8, 8, 4)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(255,255,255,.24)'
+      rrect(-8, 21.2, 6, 5.2, 3)
+      ctx.fill()
+      rrect(2, 21.2, 6, 5.2, 3)
+      ctx.fill()
+      strokeTwice(() => rrect(-9, 20, 8, 8, 4), inkSoft, 1.8, Math.sin(phaseP*5.9)*0.5, Math.cos(phaseP*5.3)*0.5, 0.55, 0.35)
+      strokeTwice(() => rrect(1, 20, 8, 8, 4), inkSoft, 1.8, Math.sin(phaseP*5.1)*0.5, Math.cos(phaseP*4.7)*0.5, 0.55, 0.35)
+
+      const helmetR = 15.5
+      const helmetGrad = ctx.createRadialGradient(-6, -22, 3, 0, -14, helmetR)
+      helmetGrad.addColorStop(0, 'rgba(255,252,246,.98)')
+      helmetGrad.addColorStop(1, 'rgba(210,220,232,.96)')
+      ctx.fillStyle = helmetGrad
+      ctx.beginPath()
+      ctx.arc(0, -14, helmetR, 0, Math.PI*2)
+      ctx.fill()
+      strokeTwice(() => { ctx.beginPath(); ctx.arc(0, -14, helmetR, 0, Math.PI*2) }, ink, 2.4, Math.sin(phaseP*4.2)*0.7, Math.cos(phaseP*3.8)*0.7, 0.85, 0.5)
+
+      ctx.strokeStyle = 'rgba(255,255,255,.40)'
+      ctx.lineWidth = 2.4
+      ctx.beginPath()
+      ctx.arc(0, -14, helmetR-2.2, 0, Math.PI*2)
+      ctx.stroke()
+
+      const visorGrad = ctx.createLinearGradient(-12, -22, 12, -6)
+      visorGrad.addColorStop(0, 'rgba(30,36,46,.92)')
+      visorGrad.addColorStop(1, 'rgba(92,120,140,.52)')
+      ctx.fillStyle = visorGrad
+      ctx.beginPath()
+      ctx.ellipse(0, -14, 11.6, 7.8, 0, 0, Math.PI*2)
+      ctx.fill()
+      strokeTwice(() => { ctx.beginPath(); ctx.ellipse(0, -14, 11.6, 7.8, 0, 0, Math.PI*2) }, inkSoft, 2.0, Math.sin(phaseP*5.4)*0.6, Math.cos(phaseP*5.0)*0.6, 0.7, 0.45)
+
+      ctx.fillStyle = 'rgba(255,255,255,.22)'
+      ctx.beginPath()
+      ctx.ellipse(-4, -18, 4.2, 2.2, -0.4, 0, Math.PI*2)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(255,255,255,.12)'
+      ctx.beginPath()
+      ctx.ellipse(4.5, -12.8, 3.2, 1.8, 0.55, 0, Math.PI*2)
+      ctx.fill()
+
+      ctx.fillStyle = 'rgba(242,164,174,.22)'
+      ctx.beginPath()
+      ctx.arc(-5.5, -12.2, 1.7, 0, Math.PI*2)
+      ctx.arc(5.5, -12.2, 1.7, 0, Math.PI*2)
+      ctx.fill()
+
+      ctx.globalAlpha = 0.14
+      ctx.fillStyle = 'rgba(120,98,70,.22)'
+      for (let k=0;k<22;k++){
+        const sx = -11 + prand(p.x*0.013 + p.y*0.017 + phaseP*2.7 + k*3.3) * 22
+        const sy = -1 + prand(p.y*0.011 + p.x*0.019 + phaseP*3.1 + k*5.2) * 26
+        ctx.beginPath()
+        ctx.arc(sx, sy, 0.6 + prand(phaseP*4.9 + k*7.1)*1.2, 0, Math.PI*2)
+        ctx.fill()
+      }
+      ctx.globalAlpha = 1
+
+      if (moving){
+        const flameGrad = ctx.createLinearGradient(0, 18, 0, 36)
+        flameGrad.addColorStop(0, 'rgba(255,220,140,.95)')
+        flameGrad.addColorStop(0.45, 'rgba(255,150,90,.70)')
+        flameGrad.addColorStop(1, 'rgba(255,150,90,0)')
+        ctx.fillStyle = flameGrad
+        ctx.beginPath()
+        ctx.moveTo(-3, 18)
+        ctx.quadraticCurveTo(-1, 30, 0, 36)
+        ctx.quadraticCurveTo(1, 30, 3, 18)
+        ctx.closePath()
+        ctx.fill()
+      }
+      ctx.restore()
+      function drawStar(x,y,r){
+        ctx.save()
+        ctx.shadowColor = '#ffd166'
+        ctx.shadowBlur = 12
+        ctx.beginPath()
+        for (let i=0;i<10;i++){
+          const ang = i * Math.PI/5
+          const rr = i%2===0 ? r : r*0.45
+          const sx = x + Math.cos(ang)*rr
+          const sy = y + Math.sin(ang)*rr
+          if (i===0) ctx.moveTo(sx,sy); else ctx.lineTo(sx,sy)
+        }
+        ctx.closePath()
+        ctx.fillStyle = '#fff4a3'
+        ctx.fill()
+        ctx.lineWidth = 2
+        ctx.strokeStyle = '#ff9f1c'
+        ctx.stroke()
+        ctx.restore()
+      }
+      function rrPath(x,y,w,h,rad){
+        const r = Math.min(rad, w/2, h/2)
+        ctx.beginPath()
+        ctx.moveTo(x+r, y)
+        ctx.lineTo(x+w-r, y)
+        ctx.quadraticCurveTo(x+w, y, x+w, y+r)
+        ctx.lineTo(x+w, y+h-r)
+        ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h)
+        ctx.lineTo(x+r, y+h)
+        ctx.quadraticCurveTo(x, y+h, x, y+h-r)
+        ctx.lineTo(x, y+r)
+        ctx.quadraticCurveTo(x, y, x+r, y)
+        ctx.closePath()
+      }
+      function prand(seed){
+        const x = Math.sin(seed) * 10000
+        return x - Math.floor(x)
+      }
+      function parseHex(h){
+        if (!h) return null
+        const m = /^#?([0-9a-f]{6})$/i.exec(h)
+        if (!m) return null
+        const n = parseInt(m[1], 16)
+        return { r:(n>>16)&255, g:(n>>8)&255, b:n&255 }
+      }
+      function mixRgb(a,b,t){
+        return { r:a.r+(b.r-a.r)*t, g:a.g+(b.g-a.g)*t, b:a.b+(b.b-a.b)*t }
+      }
+      function rgba(c,a){ return `rgba(${c.r|0},${c.g|0},${c.b|0},${a})` }
+      function strokeTwice(pathFn, col, lw, jx, jy, a1=1, a2=0.75){
+        ctx.save()
+        ctx.lineJoin = 'round'
+        ctx.lineCap = 'round'
+        ctx.strokeStyle = col
+        ctx.lineWidth = lw
+        ctx.globalAlpha = a1
+        pathFn()
+        ctx.stroke()
+        ctx.globalAlpha = a2
+        ctx.translate(jx, jy)
+        pathFn()
+        ctx.stroke()
+        ctx.restore()
+      }
+      function textureLocalCircle(r, seed, inkCol, speckCol){
+        ctx.save()
+        ctx.beginPath()
+        ctx.arc(0, 0, r, 0, Math.PI*2)
+        ctx.clip()
+        ctx.lineCap = 'round'
+        ctx.lineJoin = 'round'
+        ctx.globalAlpha = 0.22
+        ctx.strokeStyle = inkCol
+        ctx.lineWidth = 1.1
+        for (let k=0;k<8;k++){
+          const a = prand(seed + k*3.1) * Math.PI*2
+          const rr = (0.15 + prand(seed + k*5.7) * 0.72) * r
+          const x = Math.cos(a) * rr
+          const y = Math.sin(a) * rr
+          const dx = (prand(seed + k*9.2) - 0.5) * r * 0.35
+          const dy = (prand(seed + k*7.9) - 0.5) * r * 0.35
+          ctx.beginPath()
+          ctx.moveTo(x - dx*0.35, y - dy*0.35)
+          ctx.quadraticCurveTo(x + dx*0.2, y + dy*0.2, x + dx*0.55, y + dy*0.55)
+          ctx.stroke()
+        }
+        ctx.globalAlpha = 0.16
+        ctx.fillStyle = speckCol
+        for (let k=0;k<14;k++){
+          const a = prand(seed + 31.7 + k*4.1) * Math.PI*2
+          const rr = (0.05 + prand(seed + 51.3 + k*6.7) * 0.92) * r
+          ctx.beginPath()
+          ctx.arc(Math.cos(a)*rr, Math.sin(a)*rr, 0.55 + prand(seed + 71.1 + k*2.9)*1.15, 0, Math.PI*2)
+          ctx.fill()
+        }
+        ctx.restore()
+      }
+      for (const b of state.bullets){ drawStar(b.x,b.y,6) }
+      for (const c of state.circles){
+        ctx.textBaseline = 'middle'
+        ctx.textAlign = 'center'
+        ctx.font = '700 14px "Zen Maru Gothic", system-ui'
+        const label = c.label || c.key
+        const textW = ctx.measureText(label).width
+        const needW = Math.max(110, textW + 34)
+        if (!c.w || needW > c.w) c.w = needW
+        const w = c.w || needW, h = c.h || 40
+        const x0 = c.x - w/2, y0 = c.y - h/2
+        const phase = c.phase || 0
+        const jx = Math.sin(phase*9.7) * 0.8
+        const jy = Math.cos(phase*8.3) * 0.8
+        ctx.save()
+        ctx.translate(x0, y0)
+        ctx.transform(1, 0, c.skew || 0.18, 1, 0, 0)
+        const r = 11
+        const signGrad = ctx.createLinearGradient(0, 0, 0, h)
+        if (c.kind === 'powerup'){
+          signGrad.addColorStop(0,'rgba(148,36,44,.94)')
+          signGrad.addColorStop(1,'rgba(74,18,24,.94)')
+        } else {
+          signGrad.addColorStop(0,'rgba(255,248,228,.95)')
+          signGrad.addColorStop(1,'rgba(238,226,198,.94)')
+        }
+        ctx.shadowColor = 'rgba(0,0,0,.22)'
+        ctx.shadowBlur = 10
+        ctx.shadowOffsetY = 4
+        ctx.fillStyle = signGrad
+        rrPath(0, 0, w, h, r)
+        ctx.fill()
+        ctx.shadowBlur = 0
+        ctx.shadowOffsetY = 0
+        const ink = c.kind === 'powerup' ? 'rgba(70,18,20,.62)' : 'rgba(64,52,40,.55)'
+        strokeTwice(() => rrPath(0.5, 0.5, w-1, h-1, r), ink, 2.2, jx, jy, 0.95, 0.6)
+        ctx.globalAlpha = 0.14
+        ctx.fillStyle = c.kind === 'powerup' ? 'rgba(255,255,255,.20)' : 'rgba(120,98,70,.20)'
+        for (let k=0;k<16;k++){
+          const sx = 10 + prand(phase*17.1 + k*3.2) * (w-20)
+          const sy = 8 + prand(phase*19.3 + k*5.1) * (h-16)
+          ctx.beginPath()
+          ctx.arc(sx, sy, 0.7 + prand(phase*11.7 + k*7.7)*1.3, 0, Math.PI*2)
+          ctx.fill()
+        }
+        ctx.globalAlpha = 1
+        ctx.globalAlpha = 0.18
+        ctx.strokeStyle = 'rgba(255,255,255,.55)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.moveTo(10, 8)
+        ctx.lineTo(w-14, 8)
+        ctx.stroke()
+        ctx.globalAlpha = 1
+        ctx.restore()
+        const headY = y0 - 22 + Math.sin(state.time*2 + (c.phase||0)) * 2
+        const hr = c.headR || 12
+        if (c.kind === 'powerup'){
+          const ink = 'rgba(40,34,28,.62)'
+          ctx.save()
+          ctx.shadowColor = 'rgba(0,0,0,.25)'
+          ctx.shadowBlur = 10
+          ctx.shadowOffsetY = 5
+          ctx.fillStyle = 'rgba(22,18,14,.92)'
+          ctx.beginPath()
+          ctx.arc(c.x, headY, hr*0.92, 0, Math.PI*2)
+          ctx.fill()
+          ctx.shadowBlur = 0
+          ctx.shadowOffsetY = 0
+          strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr*0.92, 0, Math.PI*2) }, ink, 2.1, jx, jy, 0.8, 0.45)
+          ctx.fillStyle = 'rgba(255,255,255,.92)'
+          ctx.beginPath()
+          ctx.arc(c.x-hr*0.26, headY-hr*0.10, hr*0.12, 0, Math.PI*2)
+          ctx.arc(c.x+hr*0.26, headY-hr*0.10, hr*0.12, 0, Math.PI*2)
+          ctx.fill()
+          ctx.save()
+          ctx.translate(c.x, headY)
+          textureLocalCircle(hr*0.90, phase*16.5 + c.x*0.013 + c.y*0.017, 'rgba(60,52,44,.22)', 'rgba(255,255,255,.18)')
+          ctx.restore()
+          const leafG = ctx.createLinearGradient(c.x-4, headY-hr*1.25, c.x+4, headY-hr*0.55)
+          leafG.addColorStop(0,'rgba(140,182,92,.95)')
+          leafG.addColorStop(1,'rgba(62,120,64,.95)')
+          ctx.fillStyle = leafG
+          ctx.beginPath()
+          ctx.ellipse(c.x+hr*0.20, headY-hr*1.05, hr*0.52, hr*0.26, -0.65, 0, Math.PI*2)
+          ctx.fill()
+          ctx.strokeStyle = 'rgba(50,42,34,.45)'
+          ctx.lineWidth = 1.5
+          ctx.beginPath()
+          ctx.moveTo(c.x+hr*0.02, headY-hr*1.18)
+          ctx.quadraticCurveTo(c.x+hr*0.12, headY-hr*0.95, c.x+hr*0.35, headY-hr*0.86)
+          ctx.stroke()
+          const heartG = ctx.createRadialGradient(c.x-3, headY+hr*0.30, 2, c.x, headY+hr*0.35, 10)
+          heartG.addColorStop(0,'rgba(255,210,210,.95)')
+          heartG.addColorStop(1,'rgba(172,44,52,.98)')
+          ctx.fillStyle = heartG
+          ctx.beginPath()
+          ctx.arc(c.x-hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
+          ctx.arc(c.x+hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
+          ctx.lineTo(c.x, headY+hr*0.62)
+          ctx.closePath()
+          ctx.fill()
+          strokeTwice(() => {
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
+            ctx.lineTo(c.x, headY+hr*0.62)
+            ctx.closePath()
+          }, 'rgba(80,22,26,.55)', 1.6, jx*0.8, jy*0.8, 0.7, 0.4)
+          ctx.restore()
+        } else {
+          if (c.alienType === 'robot'){
+            const baseHex = c.alienColor || '#a0e7e5'
+            const baseRgb = parseHex(baseHex) || {r:160,g:231,b:229}
+            const light = mixRgb(baseRgb, {r:255,g:248,b:230}, 0.38)
+            const dark = mixRgb(baseRgb, {r:38,g:32,b:26}, 0.22)
+            function rrect2(x,y,w,h,rad){
+              const r = Math.min(rad, w/2, h/2)
+              ctx.beginPath()
+              ctx.moveTo(x+r, y)
+              ctx.lineTo(x+w-r, y)
+              ctx.quadraticCurveTo(x+w, y, x+w, y+r)
+              ctx.lineTo(x+w, y+h-r)
+              ctx.quadraticCurveTo(x+w, y+h, x+w-r, y+h)
+              ctx.lineTo(x+r, y+h)
+              ctx.quadraticCurveTo(x, y+h, x, y+h-r)
+              ctx.lineTo(x, y+r)
+              ctx.quadraticCurveTo(x, y, x+r, y)
+              ctx.closePath()
+            }
+            ctx.save()
+            ctx.translate(c.x, headY)
+            rrect2(-hr, -hr, hr*2, hr*2, hr*0.58)
+            const g = ctx.createRadialGradient(-hr*0.45, -hr*0.55, hr*0.2, 0, 0, hr*1.15)
+            g.addColorStop(0, rgba(light, 0.95))
+            g.addColorStop(0.45, rgba(baseRgb, 0.95))
+            g.addColorStop(1, rgba(dark, 0.95))
+            ctx.fillStyle = g
+            ctx.fill()
+            const ink = 'rgba(60,52,44,.55)'
+            strokeTwice(() => rrect2(-hr, -hr, hr*2, hr*2, hr*0.58), ink, 2.2, jx, jy, 0.8, 0.5)
+
+            const earG = ctx.createRadialGradient(-hr-3, -hr*0.25, 1, -hr-2, 0, hr*0.85)
+            earG.addColorStop(0, rgba(light, 0.92))
+            earG.addColorStop(1, rgba(dark, 0.92))
+            ctx.fillStyle = earG
+            ctx.beginPath()
+            ctx.arc(-hr-2.5, 0, hr*0.35, 0, Math.PI*2)
+            ctx.arc(hr+2.5, 0, hr*0.35, 0, Math.PI*2)
+            ctx.fill()
+            strokeTwice(() => {
+              ctx.beginPath()
+              ctx.arc(-hr-2.5, 0, hr*0.35, 0, Math.PI*2)
+              ctx.arc(hr+2.5, 0, hr*0.35, 0, Math.PI*2)
+            }, 'rgba(60,52,44,.42)', 1.6, jx*0.75, jy*0.75, 0.65, 0.4)
+
+            ctx.strokeStyle = 'rgba(60,52,44,.22)'
+            ctx.lineWidth = 1.6
+            ctx.beginPath()
+            ctx.moveTo(-hr*0.75, -hr*0.18)
+            ctx.lineTo(hr*0.75, -hr*0.18)
+            ctx.stroke()
+
+            const rivetFill = 'rgba(255,224,170,.88)'
+            for (const pt of [
+              [-hr*0.62, -hr*0.62],
+              [hr*0.62, -hr*0.62],
+              [-hr*0.62, hr*0.62],
+              [hr*0.62, hr*0.62]
+            ]){
+              ctx.fillStyle = rivetFill
+              ctx.beginPath()
+              ctx.arc(pt[0], pt[1], hr*0.10, 0, Math.PI*2)
+              ctx.fill()
+              strokeTwice(() => { ctx.beginPath(); ctx.arc(pt[0], pt[1], hr*0.10, 0, Math.PI*2) }, 'rgba(60,52,44,.45)', 1.1, jx*0.6, jy*0.6, 0.65, 0.4)
+              ctx.fillStyle = 'rgba(255,255,255,.65)'
+              ctx.beginPath()
+              ctx.arc(pt[0]-hr*0.03, pt[1]-hr*0.03, hr*0.03, 0, Math.PI*2)
+              ctx.fill()
+            }
+
+            rrect2(-hr*0.72, -hr*0.55, hr*1.44, hr*1.20, hr*0.38)
+            ctx.fillStyle = 'rgba(255,255,255,.16)'
+            ctx.fill()
+            strokeTwice(() => rrect2(-hr*0.72, -hr*0.55, hr*1.44, hr*1.20, hr*0.38), 'rgba(60,52,44,.40)', 1.6, jx*0.8, jy*0.8, 0.65, 0.4)
+
+            const faceG = ctx.createLinearGradient(0, -hr*0.55, 0, hr*0.65)
+            faceG.addColorStop(0, 'rgba(255,255,255,.10)')
+            faceG.addColorStop(0.55, 'rgba(0,0,0,.04)')
+            faceG.addColorStop(1, 'rgba(0,0,0,.10)')
+            ctx.fillStyle = faceG
+            rrect2(-hr*0.70, -hr*0.53, hr*1.40, hr*1.16, hr*0.36)
+            ctx.fill()
+
+            ctx.strokeStyle = 'rgba(60,52,44,.55)'
+            ctx.lineWidth = 2.2
+            ctx.beginPath()
+            ctx.moveTo(0, -hr-6)
+            ctx.lineTo(0, -hr+2)
+            ctx.stroke()
+            ctx.fillStyle = 'rgba(255,224,170,.92)'
+            ctx.beginPath()
+            ctx.arc(0, -hr-7.5, 3.3, 0, Math.PI*2)
+            ctx.fill()
+            strokeTwice(() => { ctx.beginPath(); ctx.arc(0, -hr-7.5, 3.3, 0, Math.PI*2) }, 'rgba(60,52,44,.55)', 1.6, jx*0.7, jy*0.7, 0.7, 0.45)
+
+            const eyeG = ctx.createRadialGradient(-hr*0.35, -hr*0.10, 1.2, -hr*0.35, -hr*0.10, 4.8)
+            eyeG.addColorStop(0, 'rgba(255,255,255,.95)')
+            eyeG.addColorStop(1, 'rgba(70,92,120,.85)')
+            ctx.fillStyle = eyeG
+            ctx.beginPath()
+            ctx.arc(-hr*0.35, -hr*0.10, 4.6, 0, Math.PI*2)
+            ctx.arc(hr*0.35, -hr*0.10, 4.6, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(255,255,255,.85)'
+            ctx.beginPath()
+            ctx.arc(-hr*0.35+1.4, -hr*0.10-1.2, 1.2, 0, Math.PI*2)
+            ctx.arc(hr*0.35+1.4, -hr*0.10-1.2, 1.2, 0, Math.PI*2)
+            ctx.fill()
+
+            rrect2(-hr*0.34, hr*0.30, hr*0.68, hr*0.20, hr*0.14)
+            ctx.fillStyle = 'rgba(45,38,30,.55)'
+            ctx.fill()
+            ctx.globalAlpha = 0.16
+            ctx.fillStyle = 'rgba(255,255,255,.45)'
+            for (let k=0;k<10;k++){
+              const sx = (-hr*0.75) + prand(phase*13.7 + k*2.9) * (hr*1.5)
+              const sy = (-hr*0.60) + prand(phase*15.9 + k*6.2) * (hr*1.2)
+              ctx.beginPath()
+              ctx.arc(sx, sy, 0.7 + prand(phase*9.1 + k*7.4)*1.2, 0, Math.PI*2)
+              ctx.fill()
+            }
+            ctx.globalAlpha = 1
+            textureLocalCircle(hr*0.98, phase*19.7 + c.x*0.013 + c.y*0.017, 'rgba(60,52,44,.22)', 'rgba(255,255,255,.18)')
+            ctx.restore()
+          } else if (c.alienType === 'slime'){
+            const baseHex = c.alienColor || '#b7f0ea'
+            const baseRgb = parseHex(baseHex) || {r:183,g:240,b:234}
+            const light = mixRgb(baseRgb, {r:255,g:248,b:230}, 0.40)
+            const dark = mixRgb(baseRgb, {r:38,g:32,b:26}, 0.18)
+            const g = ctx.createRadialGradient(c.x-hr*0.45, headY-hr*0.55, hr*0.25, c.x, headY, hr*1.15)
+            g.addColorStop(0, rgba(light, 0.95))
+            g.addColorStop(0.45, rgba(baseRgb, 0.95))
+            g.addColorStop(1, rgba(dark, 0.95))
+            ctx.fillStyle = g
+            ctx.beginPath()
+            ctx.arc(c.x, headY, hr, 0, Math.PI*2)
+            ctx.fill()
+            strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr, 0, Math.PI*2) }, 'rgba(60,52,44,.48)', 2.1, jx, jy, 0.75, 0.45)
+            ctx.fillStyle = 'rgba(255,255,255,.18)'
+            ctx.beginPath()
+            ctx.ellipse(c.x-hr*0.35, headY-hr*0.42, hr*0.40, hr*0.24, -0.6, 0, Math.PI*2)
+            ctx.fill()
+            ctx.save()
+            ctx.translate(c.x, headY)
+            textureLocalCircle(hr*0.98, phase*17.3 + c.x*0.011 + c.y*0.019, 'rgba(60,52,44,.20)', 'rgba(255,255,255,.16)')
+            ctx.restore()
+            ctx.fillStyle = 'rgba(40,34,28,.92)'
+            ctx.beginPath()
+            ctx.arc(c.x-4, headY-2, 2.4, 0, Math.PI*2)
+            ctx.arc(c.x+4, headY-2, 2.4, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(242,164,174,.22)'
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.55, headY+hr*0.28, 2.0, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.55, headY+hr*0.28, 2.0, 0, Math.PI*2)
+            ctx.fill()
+          } else if (c.alienType === 'bug'){
+            const baseHex = c.alienColor || '#c7f5ff'
+            const baseRgb = parseHex(baseHex) || {r:199,g:245,b:255}
+            const light = mixRgb(baseRgb, {r:255,g:248,b:230}, 0.38)
+            const dark = mixRgb(baseRgb, {r:38,g:32,b:26}, 0.20)
+            ctx.fillStyle = 'rgba(255,255,255,.16)'
+            ctx.beginPath()
+            ctx.ellipse(c.x-hr*0.9, headY+hr*0.10, hr*0.55, hr*0.32, -0.35, 0, Math.PI*2)
+            ctx.ellipse(c.x+hr*0.9, headY+hr*0.10, hr*0.55, hr*0.32, 0.35, 0, Math.PI*2)
+            ctx.fill()
+            const g = ctx.createRadialGradient(c.x-hr*0.45, headY-hr*0.55, hr*0.25, c.x, headY, hr*1.15)
+            g.addColorStop(0, rgba(light, 0.95))
+            g.addColorStop(0.45, rgba(baseRgb, 0.95))
+            g.addColorStop(1, rgba(dark, 0.95))
+            ctx.fillStyle = g
+            ctx.beginPath()
+            ctx.arc(c.x, headY, hr, 0, Math.PI*2)
+            ctx.fill()
+            strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr, 0, Math.PI*2) }, 'rgba(60,52,44,.50)', 2.1, jx, jy, 0.75, 0.45)
+            ctx.save()
+            ctx.translate(c.x, headY)
+            textureLocalCircle(hr*0.98, phase*21.9 + c.x*0.015 + c.y*0.012, 'rgba(60,52,44,.20)', 'rgba(255,255,255,.16)')
+            ctx.restore()
+            ctx.fillStyle = 'rgba(255,255,255,.16)'
+            ctx.beginPath()
+            ctx.ellipse(c.x-hr*0.30, headY-hr*0.48, hr*0.34, hr*0.20, -0.6, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(40,34,28,.92)'
+            ctx.beginPath()
+            ctx.arc(c.x-4, headY-2, 2.6, 0, Math.PI*2)
+            ctx.arc(c.x+4, headY-2, 2.6, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(255,255,255,.85)'
+            ctx.beginPath()
+            ctx.arc(c.x-3, headY-3, 1.0, 0, Math.PI*2)
+            ctx.arc(c.x+3, headY-3, 1.0, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(55,46,36,.18)'
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.25, headY+hr*0.15, 1.3, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.25, headY+hr*0.15, 1.3, 0, Math.PI*2)
+            ctx.arc(c.x, headY+hr*0.32, 1.1, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(242,164,174,.20)'
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.55, headY+hr*0.28, 1.9, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.55, headY+hr*0.28, 1.9, 0, Math.PI*2)
+            ctx.fill()
+          } else if (c.alienType === 'cyclops'){
+            const baseHex = c.alienColor || '#a0e7e5'
+            const baseRgb = parseHex(baseHex) || {r:160,g:231,b:229}
+            const light = mixRgb(baseRgb, {r:255,g:248,b:230}, 0.40)
+            const dark = mixRgb(baseRgb, {r:38,g:32,b:26}, 0.20)
+            const g = ctx.createRadialGradient(c.x-hr*0.45, headY-hr*0.55, hr*0.25, c.x, headY, hr*1.15)
+            g.addColorStop(0, rgba(light, 0.95))
+            g.addColorStop(0.45, rgba(baseRgb, 0.95))
+            g.addColorStop(1, rgba(dark, 0.95))
+            ctx.fillStyle = g
+            ctx.beginPath()
+            ctx.arc(c.x, headY, hr, 0, Math.PI*2)
+            ctx.fill()
+            strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr, 0, Math.PI*2) }, 'rgba(60,52,44,.50)', 2.1, jx, jy, 0.75, 0.45)
+            ctx.save()
+            ctx.translate(c.x, headY)
+            textureLocalCircle(hr*0.98, phase*23.3 + c.x*0.012 + c.y*0.016, 'rgba(60,52,44,.20)', 'rgba(255,255,255,.16)')
+            ctx.restore()
+            ctx.fillStyle = 'rgba(255,255,255,.16)'
+            ctx.beginPath()
+            ctx.ellipse(c.x-hr*0.30, headY-hr*0.50, hr*0.36, hr*0.20, -0.6, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(40,34,28,.92)'
+            ctx.beginPath()
+            ctx.arc(c.x, headY-2, 4.2, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(255,255,255,.8)'
+            ctx.beginPath()
+            ctx.arc(c.x+2, headY-3, 1.2, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(242,164,174,.20)'
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.58, headY+hr*0.28, 2.0, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.58, headY+hr*0.28, 2.0, 0, Math.PI*2)
+            ctx.fill()
+          } else if (c.alienType === 'ghost'){
+            const baseHex = c.alienColor || '#e3fdfd'
+            const baseRgb = parseHex(baseHex) || {r:227,g:253,b:253}
+            const light = mixRgb(baseRgb, {r:255,g:248,b:230}, 0.35)
+            const dark = mixRgb(baseRgb, {r:38,g:32,b:26}, 0.16)
+            const g = ctx.createRadialGradient(c.x-hr*0.45, headY-hr*0.55, hr*0.25, c.x, headY, hr*1.15)
+            g.addColorStop(0, rgba(light, 0.92))
+            g.addColorStop(0.45, rgba(baseRgb, 0.92))
+            g.addColorStop(1, rgba(dark, 0.92))
+            ctx.fillStyle = g
+            ctx.beginPath()
+            ctx.arc(c.x, headY, hr, 0, Math.PI*2)
+            ctx.fill()
+            strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr, 0, Math.PI*2) }, 'rgba(60,52,44,.45)', 2.0, jx, jy, 0.7, 0.4)
+            ctx.fillStyle = rgba(baseRgb, 0.92)
+            ctx.beginPath()
+            ctx.moveTo(c.x-hr, headY)
+            ctx.lineTo(c.x-hr, headY+hr+10)
+            ctx.quadraticCurveTo(c.x-hr*0.60, headY+hr+6, c.x-hr*0.30, headY+hr+10)
+            ctx.quadraticCurveTo(c.x, headY+hr+14, c.x+hr*0.30, headY+hr+10)
+            ctx.quadraticCurveTo(c.x+hr*0.60, headY+hr+6, c.x+hr, headY+hr+10)
+            ctx.lineTo(c.x+hr, headY)
+            ctx.closePath()
+            ctx.fill()
+            strokeTwice(() => {
+              ctx.beginPath()
+              ctx.moveTo(c.x-hr, headY)
+              ctx.lineTo(c.x-hr, headY+hr+10)
+              ctx.quadraticCurveTo(c.x-hr*0.60, headY+hr+6, c.x-hr*0.30, headY+hr+10)
+              ctx.quadraticCurveTo(c.x, headY+hr+14, c.x+hr*0.30, headY+hr+10)
+              ctx.quadraticCurveTo(c.x+hr*0.60, headY+hr+6, c.x+hr, headY+hr+10)
+              ctx.lineTo(c.x+hr, headY)
+              ctx.closePath()
+            }, 'rgba(60,52,44,.38)', 1.7, jx*0.8, jy*0.8, 0.6, 0.35)
+            ctx.save()
+            ctx.translate(c.x, headY)
+            textureLocalCircle(hr*0.98, phase*18.7 + c.x*0.014 + c.y*0.011, 'rgba(60,52,44,.18)', 'rgba(255,255,255,.16)')
+            ctx.restore()
+            ctx.fillStyle = 'rgba(255,255,255,.16)'
+            ctx.beginPath()
+            ctx.ellipse(c.x-hr*0.35, headY-hr*0.45, hr*0.40, hr*0.22, -0.6, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(40,34,28,.92)'
+            ctx.beginPath()
+            ctx.arc(c.x-5, headY-2, 2.2, 0, Math.PI*2)
+            ctx.arc(c.x+5, headY-2, 2.2, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(255,255,255,.8)'
+            ctx.beginPath()
+            ctx.arc(c.x-3, headY-3, 1.0, 0, Math.PI*2)
+            ctx.arc(c.x+3, headY-3, 1.0, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(242,164,174,.18)'
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.55, headY+hr*0.22, 1.9, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.55, headY+hr*0.22, 1.9, 0, Math.PI*2)
+            ctx.fill()
+          } else {
+            const baseHex = c.alienColor || '#c7f5ff'
+            const baseRgb = parseHex(baseHex) || {r:199,g:245,b:255}
+            const light = mixRgb(baseRgb, {r:255,g:248,b:230}, 0.38)
+            const dark = mixRgb(baseRgb, {r:38,g:32,b:26}, 0.20)
+            const g = ctx.createRadialGradient(c.x-hr*0.45, headY-hr*0.55, hr*0.25, c.x, headY, hr*1.15)
+            g.addColorStop(0, rgba(light, 0.95))
+            g.addColorStop(0.45, rgba(baseRgb, 0.95))
+            g.addColorStop(1, rgba(dark, 0.95))
+            ctx.fillStyle = g
+            ctx.beginPath()
+            ctx.arc(c.x, headY, hr, 0, Math.PI*2)
+            ctx.fill()
+            strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr, 0, Math.PI*2) }, 'rgba(60,52,44,.50)', 2.1, jx, jy, 0.75, 0.45)
+            ctx.save()
+            ctx.translate(c.x, headY)
+            textureLocalCircle(hr*0.98, phase*20.9 + c.x*0.013 + c.y*0.017, 'rgba(60,52,44,.20)', 'rgba(255,255,255,.16)')
+            ctx.restore()
+            ctx.fillStyle = 'rgba(255,255,255,.16)'
+            ctx.beginPath()
+            ctx.ellipse(c.x-hr*0.35, headY-hr*0.42, hr*0.40, hr*0.24, -0.6, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(40,34,28,.92)'
+            ctx.beginPath()
+            ctx.arc(c.x-4, headY-2, 2.4, 0, Math.PI*2)
+            ctx.arc(c.x+4, headY-2, 2.4, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(255,255,255,.8)'
+            ctx.beginPath()
+            ctx.arc(c.x-2, headY-3, 1.0, 0, Math.PI*2)
+            ctx.arc(c.x+2, headY-3, 1.0, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(242,164,174,.20)'
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.55, headY+hr*0.28, 2.0, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.55, headY+hr*0.28, 2.0, 0, Math.PI*2)
+            ctx.fill()
+          }
+        }
+        if ((c.antenna||0) > 0){
+          ctx.strokeStyle = 'rgba(60,52,44,.45)'
+          ctx.lineWidth = 2.2
+          ctx.beginPath()
+          ctx.moveTo(c.x-8, headY-10 + Math.sin(state.time*3 + (c.phase||0))*2)
+          ctx.lineTo(c.x-14, headY-18)
+          if (c.antenna > 1){
+            ctx.moveTo(c.x+8, headY-10 + Math.cos(state.time*3 + (c.phase||0))*2)
+            ctx.lineTo(c.x+14, headY-18)
+          }
+          ctx.stroke()
+        }
+        ctx.strokeStyle = 'rgba(92,56,44,.55)'
+        ctx.lineWidth = 2
+        ctx.beginPath()
+        ctx.arc(c.x, headY+4, 4, 0, Math.PI)
+        ctx.stroke()
+        ctx.strokeStyle = 'rgba(60,52,44,.48)'
+        ctx.lineWidth = 3.2
+        ctx.beginPath()
+        ctx.moveTo(c.x-10, headY+10)
+        ctx.quadraticCurveTo(c.x-22, headY+6, x0+10, y0)
+        ctx.moveTo(c.x+10, headY+10)
+        ctx.quadraticCurveTo(c.x+22, headY+6, x0+w-10, y0)
+        ctx.stroke()
+        ctx.fillStyle = c.kind === 'powerup' ? 'rgba(255,255,255,.92)' : 'rgba(30,24,18,.92)'
+        ctx.globalAlpha = 0.18
+        ctx.fillText(label, c.x+0.6, c.y+0.6)
+        ctx.globalAlpha = 1
+        ctx.fillText(label, c.x, c.y)
+      }
+      for (const pz of state.particles){
+        const a = Math.max(0, Math.min(1, pz.life*1.6))
+        ctx.globalAlpha = a
+        ctx.fillStyle = pz.color || 'rgba(255,255,255,.85)'
+        ctx.beginPath()
+        ctx.arc(pz.x, pz.y, pz.r||2, 0, Math.PI*2)
+        ctx.fill()
+        ctx.globalAlpha = 1
+      }
+    }
+    let last = performance.now()
+    function loop(ts){
+      const dt = Math.min(0.033, (ts - last)/1000)
+      last = ts
+      update(dt)
+      render()
+      requestAnimationFrame(loop)
+    }
+    requestAnimationFrame(loop)
+  </script>
+</body>
+</html>
