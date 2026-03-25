@@ -172,6 +172,94 @@
       overflow:auto;
       box-shadow:var(--shadow);
     }
+    #setup[data-step="home"] .panel{
+      width:min(980px, 100%);
+      padding:44px 42px;
+      overflow:hidden;
+      background:
+        radial-gradient(1100px 680px at 88% 18%, rgba(76,125,255,.26), transparent 64%),
+        radial-gradient(900px 640px at 70% 86%, rgba(88,150,130,.18), transparent 64%),
+        radial-gradient(800px 520px at 14% 42%, rgba(215,200,146,.10), transparent 64%),
+        linear-gradient(135deg, rgba(16,20,34,.95) 0%, rgba(11,15,26,.96) 100%);
+    }
+    #setup[data-step="home"] .card-header{ display:none }
+    .home-splash{
+      position:relative;
+      min-height:360px;
+      display:grid;
+      grid-template-columns:1fr;
+      align-content:center;
+      gap:18px;
+      padding:6px 6px;
+    }
+    .home-title{
+      font-size:clamp(40px, 5.2vw, 56px);
+      line-height:1.03;
+      font-weight:900;
+      letter-spacing:-.02em;
+      text-transform:none;
+      background:linear-gradient(180deg, rgba(255,255,255,.96) 0%, rgba(214,224,255,.82) 85%);
+      -webkit-background-clip:text;
+      background-clip:text;
+      color:transparent;
+    }
+    .home-splash .btn.primary{
+      width:fit-content;
+      min-width:170px;
+      padding:12px 18px;
+      border-radius:14px;
+      box-shadow:0 16px 44px rgba(58,74,104,.30);
+    }
+    @media (min-width: 861px){
+      .home-splash{
+        padding:6px 2px;
+        grid-template-columns:1fr;
+      }
+      .home-splash::after{
+        content:"";
+        position:absolute;
+        right:-130px;
+        top:50%;
+        transform:translateY(-50%);
+        width:520px;
+        height:520px;
+        border-radius:999px;
+        background:
+          radial-gradient(circle at 30% 28%, rgba(255,255,255,.20), transparent 48%),
+          radial-gradient(circle at 70% 72%, rgba(76,125,255,.18), transparent 52%),
+          radial-gradient(circle at 50% 50%, rgba(88,150,130,.12), transparent 58%);
+        border:1px solid rgba(255,255,255,.10);
+        box-shadow:
+          0 50px 140px rgba(0,0,0,.35),
+          0 0 0 1px rgba(255,255,255,.06) inset;
+        opacity:.9;
+        pointer-events:none;
+      }
+      .home-title br{ display:none }
+    }
+    @media (max-width: 540px){
+      #setup[data-step="home"] .panel{
+        width:min(520px, 100%);
+        padding:30px 18px;
+        border-radius:18px;
+      }
+      .home-splash{
+        min-height:280px;
+        justify-items:center;
+        text-align:center;
+        gap:16px;
+        padding:6px 0;
+      }
+      .home-title{
+        font-size:clamp(34px, 9.2vw, 44px);
+        letter-spacing:-.01em;
+      }
+      .home-splash .btn.primary{
+        width:100%;
+        max-width:320px;
+      }
+      .home-splash::after{ display:none }
+    }
     .card-header{ display:flex; flex-direction:column; gap:8px; margin-bottom:16px }
     .card-header .title{ font-size:20px; font-weight:900 }
     .card-header .subtitle{ font-size:13px; color:var(--muted) }
@@ -247,8 +335,47 @@
       outline:none;
       box-shadow:0 1px 0 rgba(255,255,255,.05) inset;
     }
+    .form-grid select{
+      -webkit-appearance:none;
+      appearance:none;
+      padding-right:44px;
+      cursor:pointer;
+      color-scheme: dark;
+      background-image:
+        linear-gradient(45deg, transparent 50%, rgba(238,242,255,.72) 50%),
+        linear-gradient(135deg, rgba(238,242,255,.72) 50%, transparent 50%),
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,0));
+      background-position:
+        calc(100% - 18px) 50%,
+        calc(100% - 12px) 50%,
+        calc(100% - 38px) 50%;
+      background-size:
+        6px 6px,
+        6px 6px,
+        1px 22px;
+      background-repeat:no-repeat;
+    }
+    .form-grid select:hover{ border-color:rgba(255,255,255,.20) }
     .form-grid input::placeholder{ color:rgba(238,242,255,.45) }
     .form-grid input:focus, .form-grid select:focus{ border-color:rgba(76,125,255,.55); box-shadow:0 0 0 4px rgba(76,125,255,.18) }
+    #stepManual .form-grid input.manual-serving{
+      background:rgba(56, 28, 32, .82);
+      border-color:rgba(255, 120, 128, .22);
+    }
+    #stepManual .form-grid input.manual-serving:focus{
+      border-color:rgba(255, 120, 128, .55);
+      box-shadow:0 0 0 4px rgba(255, 120, 128, .16);
+    }
+    #adjustPortionsManually,
+    #manualEstimate{
+      border:1px solid rgba(255, 120, 128, .22);
+      background:rgba(56, 28, 32, .72);
+    }
+    #adjustPortionsManually:hover,
+    #manualEstimate:hover{
+      border-color:rgba(255, 120, 128, .32);
+      background:rgba(56, 28, 32, .82);
+    }
     .section{ display:none }
     .section.active{ display:block }
     .btn-row{ display:flex; gap:10px; margin-top:18px }
@@ -262,6 +389,12 @@
       cursor:pointer;
       transition:transform .06s ease, background .2s ease, border-color .2s ease;
       flex:1;
+    }
+    .btn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+      transform:none;
+      box-shadow:none;
     }
     .btn:hover{ background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.20) }
     .btn:active{ transform:translateY(1px) }
@@ -277,9 +410,9 @@
       border-radius:14px;
       padding:12px 12px;
     }
-    .review .k{ color:rgba(238,242,255,.62); font-size:13px; font-weight:900; letter-spacing:.06em; text-transform:uppercase }
-    .review .v{ font-size:14px; font-weight:900; margin-top:6px }
-    .review pre{ margin:10px 0 0; white-space:pre-wrap; word-break:break-word; font-size:13px; line-height:1.4; color:rgba(238,242,255,.86) }
+    .review .k{ color:rgba(238,242,255,.62); font-size:12px; font-weight:900; letter-spacing:.06em; text-transform:uppercase }
+    .review .v{ font-size:12px; font-weight:900; margin-top:6px; color:rgba(238,242,255,.92) }
+    .review pre{ margin:10px 0 0; white-space:pre-wrap; word-break:break-word; font-size:12px; line-height:1.55; color:rgba(238,242,255,.92) }
     .macro-label{
       display:inline-flex;
       align-items:center;
@@ -293,6 +426,7 @@
       border:1px solid rgba(255,255,255,.18);
     }
     #macroTotal, #macroTotalProfile{ margin-top:6px; font-size:14px; font-weight:900; color:rgba(238,242,255,.88) }
+    #macroTotal.warn, #macroTotalProfile.warn{ color: rgba(170, 96, 96, .95) }
     input[type="range"]{ width:100% }
 
     #toast{ position:fixed; top:calc(16px + env(safe-area-inset-top) + var(--vv-top, 0px)); right:calc(16px + env(safe-area-inset-right)); z-index:30; display:flex; flex-direction:column; gap:8px }
@@ -310,6 +444,69 @@
     }
     .toast-msg.error{ border-color:rgba(255,77,79,.55) }
     .toast-msg.info{ border-color:rgba(76,125,255,.55) }
+
+    .macro-summary{
+      display:grid;
+      gap:10px;
+    }
+    .macro-lines{
+      display:grid;
+      gap:6px;
+      font-size:12px;
+      font-weight:900;
+      color:rgba(238,242,255,.92);
+      line-height:1.55;
+      font-variant-numeric:tabular-nums;
+    }
+    .macro-viz{
+      display:grid;
+      gap:8px;
+    }
+    .macro-bar-row{
+      display:grid;
+      grid-template-columns:64px 1fr;
+      gap:10px;
+      align-items:center;
+    }
+    .macro-bar-label{
+      color:rgba(238,242,255,.74);
+      font-weight:900;
+      font-size:12px;
+      text-align:left;
+    }
+    .stack-bar{
+      height:14px;
+      display:flex;
+      overflow:hidden;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:rgba(255,255,255,.06);
+      box-shadow: inset 0 0 0 1px rgba(0,0,0,.10);
+    }
+    .stack-seg{ height:100% }
+    .stack-seg.c{ background:#808000 }
+    .stack-seg.p{ background:#556b2f }
+    .stack-seg.f{ background:#6b8f3f }
+    .macro-legend{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:wrap;
+      color:rgba(238,242,255,.72);
+      font-weight:900;
+      font-size:12px;
+    }
+    .macro-legend .item{ display:inline-flex; gap:6px; align-items:center }
+    .macro-legend .swatch{
+      width:10px;
+      height:10px;
+      border-radius:3px;
+      border:1px solid rgba(255,255,255,.22);
+      background:rgba(255,255,255,.06);
+    }
+    .macro-legend .swatch.c{ background:#808000 }
+    .macro-legend .swatch.p{ background:#556b2f }
+    .macro-legend .swatch.f{ background:#6b8f3f }
 
     .tbl{ width:100%; border-collapse:collapse; margin-top:10px; font-size:12px }
     .tbl th, .tbl td{ border-bottom:1px solid rgba(255,255,255,.08); padding:8px 6px; text-align:left; vertical-align:top }
@@ -413,32 +610,38 @@
   <div id="setup">
     <div class="panel">
       <div class="card-header">
-        <div class="title">Select Energy Target</div>
-        <div class="subtitle" id="setupSubtitle">Choose a mode to compute today’s targets</div>
+        <div class="title" id="setupTitle">Set Your Energy Intake &amp; Macronutrient Ratios</div>
+        <div class="subtitle" id="setupSubtitle" style="display:none"></div>
       </div>
-      <div id="stepInput" class="section active">
+      <div id="stepHome" class="section active">
+        <div class="home-splash">
+          <div class="home-title">Portion Based <br>Menu Design</div>
+          <button class="btn primary" id="getStarted">Get Started</button>
+        </div>
+      </div>
+      <div id="stepInput" class="section">
         <div class="mode-row">
-          <label class="radio energy-mode"><input type="radio" name="mode" value="target" checked> <span>Enter Target Energy</span></label>
-          <label class="radio energy-mode"><input type="radio" name="mode" value="profile"> <span>Compute from Profile</span></label>
+          <label class="radio energy-mode"><input type="radio" name="mode" value="target" checked> <span>Manual Input</span></label>
+          <label class="radio energy-mode"><input type="radio" name="mode" value="profile"> <span>Formula Calculation</span></label>
         </div>
         <div id="targetSection" class="section active">
           <div class="form-grid">
             <label><span>Target Energy (kcal)</span><input id="kcal" type="number" min="600" placeholder="e.g. 1800"></label>
             <label><span>Protein (%)</span>
-              <input id="macroProtein" type="range" min="5" max="40" step="1" value="20" style="accent-color:#556b2f">
+              <input id="macroProtein" type="range" min="0" max="100" step="1" value="20" style="accent-color:#556b2f">
               <span id="macroProteinLabel" class="macro-label">20%</span>
             </label>
             <label><span>Fat (%)</span>
-              <input id="macroFat" type="range" min="10" max="40" step="1" value="25" style="accent-color:#6b8f3f">
+              <input id="macroFat" type="range" min="0" max="100" step="1" value="25" style="accent-color:#6b8f3f">
               <span id="macroFatLabel" class="macro-label">25%</span>
             </label>
-            <label><span>Carbs (%)</span>
-              <input id="macroCarb" type="range" min="40" max="75" step="1" value="55" style="accent-color:#808000">
+            <label><span>Carbohydrates (%)</span>
+              <input id="macroCarb" type="range" min="0" max="100" step="1" value="55" style="accent-color:#808000">
               <span id="macroCarbLabel" class="macro-label">55%</span>
             </label>
           </div>
           <div id="macroTotal">Total: 100% (Remaining 0%)</div>
-          <div style="margin-top:8px; font-size:12px; opacity:.8">Reference: Protein 10–20%, Fat 20–30%, Carbs 50–60%</div>
+          <div style="margin-top:8px; font-size:12px; opacity:.8">Reference: Carbohydrates 50–60%, Protein 10–20%, Fat 20–30%</div>
         </div>
         <div id="profileSection" class="section">
           <div class="form-grid">
@@ -484,20 +687,20 @@
           <div id="macroCustomSectionProfile" class="section">
             <div class="form-grid">
               <label><span>Protein (%)</span>
-                <input id="macroProteinProfile" type="range" min="5" max="40" step="1" value="20" style="accent-color:#556b2f">
+                <input id="macroProteinProfile" type="range" min="0" max="100" step="1" value="20" style="accent-color:#556b2f">
                 <span id="macroProteinProfileLabel" class="macro-label">20%</span>
               </label>
               <label><span>Fat (%)</span>
-                <input id="macroFatProfile" type="range" min="10" max="40" step="1" value="25" style="accent-color:#6b8f3f">
+                <input id="macroFatProfile" type="range" min="0" max="100" step="1" value="25" style="accent-color:#6b8f3f">
                 <span id="macroFatProfileLabel" class="macro-label">25%</span>
               </label>
-              <label><span>Carbs (%)</span>
-                <input id="macroCarbProfile" type="range" min="40" max="75" step="1" value="55" style="accent-color:#808000">
+              <label><span>Carbohydrates (%)</span>
+                <input id="macroCarbProfile" type="range" min="0" max="100" step="1" value="55" style="accent-color:#808000">
                 <span id="macroCarbProfileLabel" class="macro-label">55%</span>
               </label>
             </div>
             <div id="macroTotalProfile">Total: 100% (Remaining 0%)</div>
-            <div style="margin-top:8px; font-size:12px; opacity:.8">Reference: Protein 10–20%, Fat 20–30%, Carbs 50–60%</div>
+            <div style="margin-top:8px; font-size:12px; opacity:.8">Reference: Carbohydrates 50–60%, Protein 10–20%, Fat 20–30%</div>
           </div>
         </div>
         <div class="btn-row">
@@ -512,16 +715,48 @@
         </div>
         <div id="portionReview" class="form-grid"></div>
         <div class="review" style="margin-top:12px">
-          <div class="k">Per-Serving Breakdown</div>
+          <div class="k">Check Your Food Servings</div>
           <div id="breakdownTable"></div>
         </div>
         <div class="review" style="margin-top:12px">
-          <div class="k">Macronutrients</div>
+          <div class="k">Macronutrients Summary</div>
+          <div id="macroSummary"></div>
+        </div>
+        <div class="review" style="margin-top:12px">
+          <div class="k">Notes</div>
           <pre id="macroReview"></pre>
         </div>
         <div class="btn-row">
           <button class="btn" id="backToInputFromPortions">Back</button>
+          <button class="btn" id="adjustPortionsManually">Adjust Portions Manually</button>
           <button class="btn primary" id="startGame">Start Game</button>
+        </div>
+      </div>
+      <div id="stepManual" class="section">
+        <div class="review" style="margin-bottom:12px">
+          <div class="k">Selected Energy</div>
+          <div class="v" id="manualEnergyValue"></div>
+        </div>
+        <div id="manualPortionReview" class="form-grid"></div>
+        <div class="review" style="margin-top:12px">
+          <div class="k">Check Your Food Servings</div>
+          <div class="hint" style="margin-top:6px; text-align:center; color:#8b7d2d">Click 'Estimate' below to refresh your results after making changes.</div>
+          <div id="manualBreakdownTable"></div>
+        </div>
+        <div class="review" style="margin-top:12px">
+          <div class="k">Macronutrients Summary</div>
+          <div id="manualMacroSummary"></div>
+        </div>
+        <div class="review" style="margin-top:12px">
+          <div class="k">Notes</div>
+          <pre id="manualMacroReview"></pre>
+        </div>
+        <div class="btn-row" style="margin-top:12px">
+          <button class="btn primary" id="manualEstimate">Estimate</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn" id="manualBack">Back</button>
+          <button class="btn primary" id="manualStartGame">Start Game</button>
         </div>
       </div>
     </div>
@@ -557,17 +792,31 @@
     const backToInputFromEnergyBtn = document.getElementById('backToInputFromEnergy')
     const nextToPortionsFromEnergyBtn = document.getElementById('nextToPortionsFromEnergy')
     const backToInputFromPortionsBtn = document.getElementById('backToInputFromPortions')
+    const adjustPortionsManuallyBtn = document.getElementById('adjustPortionsManually')
     const startGameBtn = document.getElementById('startGame')
+    const manualEstimateBtn = document.getElementById('manualEstimate')
+    const manualBackBtn = document.getElementById('manualBack')
+    const manualStartGameBtn = document.getElementById('manualStartGame')
     const setupSubtitleEl = document.getElementById('setupSubtitle')
+    const setupTitleEl = document.getElementById('setupTitle')
+    const stepHomeEl = document.getElementById('stepHome')
     const stepInputEl = document.getElementById('stepInput')
     const stepEnergyEl = document.getElementById('stepEnergy')
     const stepPortionsEl = document.getElementById('stepPortions')
+    const stepManualEl = document.getElementById('stepManual')
+    const getStartedBtn = document.getElementById('getStarted')
     const energyReviewValueEl = document.getElementById('energyReviewValue')
     const energyFormulaEl = document.getElementById('energyFormula')
     const portionEnergyValueEl = document.getElementById('portionEnergyValue')
     const portionReviewEl = document.getElementById('portionReview')
     const breakdownTableEl = document.getElementById('breakdownTable')
+    const macroSummaryEl = document.getElementById('macroSummary')
     const macroReviewEl = document.getElementById('macroReview')
+    const manualEnergyValueEl = document.getElementById('manualEnergyValue')
+    const manualPortionReviewEl = document.getElementById('manualPortionReview')
+    const manualBreakdownTableEl = document.getElementById('manualBreakdownTable')
+    const manualMacroSummaryEl = document.getElementById('manualMacroSummary')
+    const manualMacroReviewEl = document.getElementById('manualMacroReview')
     const ageEl = document.getElementById('age')
     const sexEl = document.getElementById('sex')
     const heightEl = document.getElementById('height')
@@ -679,12 +928,34 @@
       { key:'Fruits',        label:'Fruits', color:'#b36b3a' },
       { key:'Oils and Nuts', label:'Oils and Nuts', color:'#a4637a' }
     ]
+    const GAME_GROUPS = FOOD_GROUPS.flatMap(g => g.key === 'Proteins'
+      ? [g, { key:'Proteins_medium', label:'Beans, Fish, Eggs, and Meat（medium-fat）', color:'#5b9a6a' }]
+      : [g]
+    )
     function labelOf(key){
-      const f = FOOD_GROUPS.find(g=>g.key===key)
+      const f = GAME_GROUPS.find(g=>g.key===key)
       return f ? (f.label || f.key) : key
     }
     function halfRound(n){ return Math.round(n*2)/2 }
-    function colorOf(key){ const f = FOOD_GROUPS.find(g=>g.key===key); return f ? f.color : '#1e3a8a' }
+    function normalizeMacroInts(pPct, fPct, cPct){
+      const p = Math.max(0, Math.round(+pPct || 0))
+      const f = Math.max(0, Math.round(+fPct || 0))
+      const c = Math.max(0, Math.round(+cPct || 0))
+      const sum = p + f + c
+      if (!(sum > 0)) return null
+      const scaled = [
+        { k: 'p', raw: p * 100 / sum },
+        { k: 'f', raw: f * 100 / sum },
+        { k: 'c', raw: c * 100 / sum },
+      ]
+      let out = scaled.map(x => ({ k: x.k, v: Math.floor(x.raw), r: x.raw - Math.floor(x.raw) }))
+      let remain = 100 - out.reduce((a, x) => a + x.v, 0)
+      out.sort((a, b) => b.r - a.r)
+      for (let i = 0; i < out.length && remain > 0; i++, remain--) out[i].v++
+      const res = Object.fromEntries(out.map(x => [x.k, x.v]))
+      return { pPct: res.p, fPct: res.f, cPct: res.c }
+    }
+    function colorOf(key){ const f = GAME_GROUPS.find(g=>g.key===key); return f ? f.color : '#1e3a8a' }
     function computeEnergy(sex, age, heightCm, weightKg, activity, stress){
       const BEE = sex === 'male'
         ? 66 + 13.7*weightKg + 5*heightCm - 6.8*age
@@ -695,7 +966,17 @@
       const macroTarget = macroOverride && isFinite(macroOverride.cPct) && isFinite(macroOverride.pPct) && isFinite(macroOverride.fPct)
         ? macroOverride
         : { cPct: 55, pPct: 20, fPct: 25 }
-      const macroStrict = macroSource === 'custom'
+      const isMacroTargetTypical = macroTarget.cPct >= 50 && macroTarget.cPct <= 60
+        && macroTarget.pPct >= 10 && macroTarget.pPct <= 20
+        && macroTarget.fPct >= 20 && macroTarget.fPct <= 30
+        && Math.abs((macroTarget.cPct + macroTarget.pPct + macroTarget.fPct) - 100) <= 0.6
+      const macroImbalance = Math.max(
+        Math.max(0, 50 - macroTarget.cPct, macroTarget.cPct - 60),
+        Math.max(0, 10 - macroTarget.pPct, macroTarget.pPct - 20),
+        Math.max(0, 20 - macroTarget.fPct, macroTarget.fPct - 30)
+      )
+      const severeImbalance = macroImbalance >= 8
+      const servingFirst = !!isMacroTargetTypical && kcal >= 1200 && kcal <= 2800
       const carbTargetG = (kcal * (macroTarget.cPct/100)) / 4
       const proteinTargetG = (kcal * (macroTarget.pPct/100)) / 4
       const fatTargetG = (kcal * (macroTarget.fPct/100)) / 9
@@ -707,23 +988,19 @@
         oil: { c:0, p:0, f:5, kcal:45 },
         dairyLow: { c:12, p:8, f:4, kcal:120 },
       }
-      let fruits = 2
-      if (kcal >= 2000 && kcal < 2200) fruits = 3
-      else if (kcal >= 2200 && kcal < 2500) fruits = 3.5
-      else if (kcal >= 2500) fruits = 4
-      fruits = clamp(halfRound(fruits), 2, 4)
-      let vegetables = 3
-      if (kcal >= 2000 && kcal <= 2200) vegetables = 4
-      else if (kcal >= 2500) vegetables = 5
-      vegetables = clamp(halfRound(vegetables), 3, 5)
-      let dairyServings = kcal >= 2700 ? 2 : 1.5
-      dairyServings = clamp(halfRound(dairyServings), 1, 2)
-      const defaultMins = { grains:10, proteins:4, dairy:1, veg:3, fruit:2, oils:3 }
-      const mins = macroStrict
-        ? { grains:0, proteins:0, dairy:0, veg:0, fruit:0, oils:0 }
-        : defaultMins
-      const recommended = {
-        grains:[10,20], proteins:[4,8], dairy:[1,2], veg:[3,5], fruit:[2,4], oils:[3,7]
+      const recommended = { grains:[10,20], proteins:[4,8], dairy:[1,2], veg:[3,5], fruit:[2,4], oils:[3,7] }
+      const imbalanceRanges = severeImbalance
+        ? { grains:[0, 45], proteins:[0, 22], dairy:[0, 5], veg:[0, 14], fruit:[0, 12], oils:[3, 20] }
+        : { grains:[0, 35], proteins:[0, 16], dairy:[0, 3], veg:[0, 10], fruit:[0, 8], oils:[3, 16] }
+      let energyTolPct = 0.02
+      let macroMaxAbsPct = 3
+      let minE = kcal * (1 - energyTolPct)
+      let maxE = kcal * (1 + energyTolPct)
+      function setConstraints(nextEnergyTolPct, nextMacroMaxAbsPct){
+        energyTolPct = nextEnergyTolPct
+        macroMaxAbsPct = nextMacroMaxAbsPct
+        minE = kcal * (1 - energyTolPct)
+        maxE = kcal * (1 + energyTolPct)
       }
       function totals(x1,x2,x3,x4,x5,x6){
         const carbsG = x1*FOOD.grains.c + x3*FOOD.dairyLow.c + x4*FOOD.veg.c + x5*FOOD.fruit.c
@@ -736,84 +1013,250 @@
         const fPct = totalE? fE/totalE*100 : 0
         return { carbsG, proteinG, fatG, totalE, cPct, pPct, fPct }
       }
-      function feasible(x1,x2,x3,x4,x5,x6){
-        return x1>=0 && x2>=0 && x3>=0 && x4>=0 && x5>=0 && x6>=0
+      let adjustments = []
+      function clamp(x, lo, hi){ return Math.max(lo, Math.min(hi, x)) }
+      function macroSse(t){
+        const cDiff = t.cPct - macroTarget.cPct
+        const pDiff = t.pPct - macroTarget.pPct
+        const fDiff = t.fPct - macroTarget.fPct
+        return cDiff*cDiff + pDiff*pDiff + fDiff*fDiff
       }
-      function obj(x1,x2,x3,x4,x5,x6){
-        const t = totals(x1,x2,x3,x4,x5,x6)
-        const dE = t.totalE - kcal
-        const energyErr = dE*dE
-        const ec = t.carbsG - carbTargetG
-        const ep = t.proteinG - proteinTargetG
-        const ef = t.fatG - fatTargetG
-        const macroErr = ec*ec + ep*ep + ef*ef
-        function rangePenalty(x,[lo,hi]){
-          if (x < lo) return (lo - x) * (lo - x)
-          if (x > hi) return (x - hi) * (x - hi)
-          return 0
+      function macroAbsStats(t){
+        const cAbs = Math.abs(t.cPct - macroTarget.cPct)
+        const pAbs = Math.abs(t.pPct - macroTarget.pPct)
+        const fAbs = Math.abs(t.fPct - macroTarget.fPct)
+        const maxAbs = Math.max(cAbs, pAbs, fAbs)
+        const minAbs = Math.min(cAbs, pAbs, fAbs)
+        const sumAbs = cAbs + pAbs + fAbs
+        const rangeAbs = maxAbs - minAbs
+        return { cAbs, pAbs, fAbs, maxAbs, minAbs, sumAbs, rangeAbs }
+      }
+      function macroMaxAbs(t){
+        return macroAbsStats(t).maxAbs
+      }
+      function macroBand(t){
+        const m = macroMaxAbs(t)
+        if (m <= 3) return 0
+        if (m <= 5) return 1
+        return 2
+      }
+      function isValid(t, s){
+        if (!isFinite(t.totalE) || t.totalE <= 0) return false
+        if (!(t.totalE >= minE && t.totalE <= maxE)) return false
+        if (macroMaxAbs(t) > macroMaxAbsPct + 1e-9) return false
+        if (!(t.fatG > 0)) return false
+        const oilFatG = s.o * FOOD.oil.f
+        if (oilFatG / t.fatG < 0.4) return false
+        if (s.o < 3) return false
+        return true
+      }
+      function exceedScore(s){
+        return (
+          Math.max(0, s.g - recommended.grains[1]) +
+          Math.max(0, s.p - recommended.proteins[1]) +
+          Math.max(0, s.d - recommended.dairy[1]) +
+          Math.max(0, s.v - recommended.veg[1]) +
+          Math.max(0, s.r - recommended.fruit[1]) +
+          Math.max(0, s.o - recommended.oils[1])
+        )
+      }
+      function servingDeviation(s){
+        return (
+          Math.max(0, recommended.grains[0] - s.g) + Math.max(0, s.g - recommended.grains[1]) +
+          Math.max(0, recommended.proteins[0] - s.p) + Math.max(0, s.p - recommended.proteins[1]) +
+          Math.max(0, recommended.dairy[0] - s.d) + Math.max(0, s.d - recommended.dairy[1]) +
+          Math.max(0, recommended.veg[0] - s.v) + Math.max(0, s.v - recommended.veg[1]) +
+          Math.max(0, recommended.fruit[0] - s.r) + Math.max(0, s.r - recommended.fruit[1]) +
+          Math.max(0, 3 - s.o) + Math.max(0, s.o - recommended.oils[1])
+        )
+      }
+      function chooseBetter(a, b){
+        if (!a) return b
+        if (!b) return a
+        if (servingFirst){
+          const aDev = servingDeviation(a)
+          const bDev = servingDeviation(b)
+          if (bDev < aDev - 1e-9) return b
+          if (bDev > aDev + 1e-9) return a
+          if (b.energyGap < a.energyGap - 1e-6) return b
+          if (b.energyGap > a.energyGap + 1e-6) return a
+          const aMax = macroMaxAbs(a.t)
+          const bMax = macroMaxAbs(b.t)
+          if (bMax < aMax - 1e-9) return b
+          if (bMax > aMax + 1e-9) return a
+          if (b.exceed < a.exceed - 1e-9) return b
+          if (b.exceed > a.exceed + 1e-9) return a
+          if (b.sse < a.sse - 1e-9) return b
+          return a
         }
-        const recPen =
-          rangePenalty(x1, recommended.grains) +
-          rangePenalty(x2, recommended.proteins) +
-          rangePenalty(x3, recommended.dairy) +
-          rangePenalty(x4, recommended.veg) +
-          rangePenalty(x5, recommended.fruit) +
-          rangePenalty(x6, recommended.oils)
-        const recWeight = macroStrict ? 0.0 : 0.2
-        return energyErr + macroErr*0.2 + recPen*recWeight
+        const aBand = macroBand(a.t)
+        const bBand = macroBand(b.t)
+        if (bBand < aBand) return b
+        if (bBand > aBand) return a
+        const aAbs = macroAbsStats(a.t)
+        const bAbs = macroAbsStats(b.t)
+        if (bAbs.maxAbs < aAbs.maxAbs - 1e-9) return b
+        if (bAbs.maxAbs > aAbs.maxAbs + 1e-9) return a
+        if (b.energyGap < a.energyGap - 1e-6) return b
+        if (b.energyGap > a.energyGap + 1e-6) return a
+        if (bAbs.rangeAbs < aAbs.rangeAbs - 1e-9) return b
+        if (bAbs.rangeAbs > aAbs.rangeAbs + 1e-9) return a
+        if (bAbs.sumAbs < aAbs.sumAbs - 1e-9) return b
+        if (bAbs.sumAbs > aAbs.sumAbs + 1e-9) return a
+        if (b.sse < a.sse - 1e-9) return b
+        const macroSlack = 0.10
+        if (b.sse <= a.sse + macroSlack){
+          if (Math.abs(b.energyGap - a.energyGap) <= 1e-6 && b.exceed < a.exceed - 1e-9) return b
+        }
+        return a
       }
-      const baseGrains = halfRound(Math.max(mins.grains, (carbTargetG - (dairyServings*FOOD.dairyLow.c + vegetables*FOOD.veg.c + fruits*FOOD.fruit.c)) / FOOD.grains.c))
-      const baseProteins = halfRound(Math.max(mins.proteins, (proteinTargetG - (dairyServings*FOOD.dairyLow.p + vegetables*FOOD.veg.p + baseGrains*FOOD.grains.p)) / FOOD.proteinLow.p))
-      const baseOils = halfRound(Math.max(mins.oils, (fatTargetG - (dairyServings*FOOD.dairyLow.f + baseProteins*FOOD.proteinLow.f)) / FOOD.oil.f))
-      let best = { x1:baseGrains, x2:baseProteins, x3:dairyServings, x4:vegetables, x5:fruits, x6:baseOils, s: Infinity }
-      const steps = [ -4,-3.5,-3,-2.5,-2,-1.5,-1,-0.5,0,0.5,1,1.5,2,2.5,3,3.5,4,5,6 ]
-      const small = [ -1,-0.5,0,0.5,1 ]
-      const epsKcal = Math.max(1, kcal * 0.005)
-      for (const dg of steps){
-        for (const dp of steps){
-          for (const doil of steps){
-            for (const dv of small){
-              for (const dr of small){
-                const g = halfRound(Math.max(mins.grains, baseGrains + dg))
-                const p = halfRound(Math.max(mins.proteins, baseProteins + dp))
-                const o = halfRound(Math.max(mins.oils, baseOils + doil))
-                const v = halfRound(Math.max(mins.veg, vegetables + dv))
-                const r = halfRound(Math.max(mins.fruit, fruits + dr))
-                const d = dairyServings
-                if (!feasible(g,p,d,v,r,o)) continue
-                const t = totals(g,p,d,v,r,o)
-                const eDiff = Math.abs(t.totalE - kcal)
-                const mDiff = Math.abs(t.cPct - macroTarget.cPct) + Math.abs(t.pPct - macroTarget.pPct) + Math.abs(t.fPct - macroTarget.fPct)
-                const s = obj(g,p,d,v,r,o)
-                if (best.s === Infinity){
-                  best = { x1:g, x2:p, x3:d, x4:v, x5:r, x6:o, s, e:eDiff, m:mDiff }
-                } else {
-                  if (eDiff < best.e - epsKcal || (Math.abs(eDiff - best.e) <= epsKcal && mDiff < best.m - 0.01) || (Math.abs(eDiff - best.e) <= epsKcal && Math.abs(mDiff - best.m) <= 0.01 && s < best.s)){
-                    best = { x1:g, x2:p, x3:d, x4:v, x5:r, x6:o, s, e:eDiff, m:mDiff }
-                  }
-                }
-              }
+      function estimateSequential(ranges){
+        let remC = carbTargetG
+        let remP = proteinTargetG
+        let remF = fatTargetG
+        let v = kcal >= 2500 ? 5 : kcal >= 2000 ? 4 : 3
+        v = halfRound(clamp(v, ranges.veg[0], ranges.veg[1]))
+        remC -= v*FOOD.veg.c
+        remP -= v*FOOD.veg.p
+        let r = 2
+        if (kcal >= 2000 && kcal < 2200) r = 3
+        else if (kcal >= 2200 && kcal < 2500) r = 3.5
+        else if (kcal >= 2500) r = 4
+        r = halfRound(clamp(r, ranges.fruit[0], ranges.fruit[1]))
+        remC -= r*FOOD.fruit.c
+        let g = halfRound(remC / FOOD.grains.c)
+        g = halfRound(clamp(g, ranges.grains[0], ranges.grains[1]))
+        remC -= g*FOOD.grains.c
+        remP -= g*FOOD.grains.p
+        let p = halfRound(remP / FOOD.proteinLow.p)
+        p = halfRound(clamp(p, ranges.proteins[0], ranges.proteins[1]))
+        remP -= p*FOOD.proteinLow.p
+        remF -= p*FOOD.proteinLow.f
+        let o = halfRound(remF / FOOD.oil.f)
+        o = halfRound(clamp(o, Math.max(3, ranges.oils[0]), ranges.oils[1]))
+        let d = kcal >= 2700 ? 2 : 1.5
+        d = halfRound(clamp(d, ranges.dairy[0], ranges.dairy[1]))
+        return { g,p,d,v,r,o }
+      }
+      function refine(start, ranges){
+        const step = 0.5
+        const mk = (s) => {
+          const g = halfRound(clamp(s.g, ranges.grains[0], ranges.grains[1]))
+          const p = halfRound(clamp(s.p, ranges.proteins[0], ranges.proteins[1]))
+          const d = halfRound(clamp(s.d, ranges.dairy[0], ranges.dairy[1]))
+          const v = halfRound(clamp(s.v, ranges.veg[0], ranges.veg[1]))
+          const r = halfRound(clamp(s.r, ranges.fruit[0], ranges.fruit[1]))
+          const o = halfRound(clamp(s.o, Math.max(3, ranges.oils[0]), ranges.oils[1]))
+          return { g,p,d,v,r,o }
+        }
+        let best = null
+        const startT = totals(start.g, start.p, start.d, start.v, start.r, start.o)
+        if (isValid(startT, start)){
+          best = { ...start, t: startT, sse: macroSse(startT), energyGap: Math.abs(startT.totalE - kcal), exceed: exceedScore(start) }
+        }
+        const vars = ['o', 'p', 'g', 'r', 'v', 'd']
+        const deltas = [ -2, -1, 1, 2 ].map(x => x * step)
+        for (let iter = 0; iter < 80; iter++){
+          let improved = false
+          let candidateBest = best
+          const base = best ? { g:best.g, p:best.p, d:best.d, v:best.v, r:best.r, o:best.o } : start
+          for (const k of vars){
+            for (const dv of deltas){
+              const next = mk({ ...base, [k]: base[k] + dv })
+              const t = totals(next.g, next.p, next.d, next.v, next.r, next.o)
+              if (!isValid(t, next)) continue
+              const cand = { ...next, t, sse: macroSse(t), energyGap: Math.abs(t.totalE - kcal), exceed: exceedScore(next) }
+              candidateBest = chooseBetter(candidateBest, cand)
             }
           }
+          if (candidateBest && (!best || candidateBest.sse < best.sse - 1e-9 || candidateBest.energyGap < best.energyGap - 1e-6)){
+            best = candidateBest
+            improved = true
+          }
+          if (!improved) break
+        }
+        return best
+      }
+      const strictRanges = servingFirst ? recommended : imbalanceRanges
+      const relaxedRanges = {
+        grains:[recommended.grains[0], 30],
+        proteins:[recommended.proteins[0], 14],
+        dairy:recommended.dairy,
+        veg:recommended.veg,
+        fruit:recommended.fruit,
+        oils:[recommended.oils[0], 12],
+      }
+      const fallbackRanges = {
+        grains:[0, 35],
+        proteins:[0, 16],
+        dairy:[0, 3],
+        veg:[0, 8],
+        fruit:[0, 6],
+        oils:[3, 14],
+      }
+      function randHalf(lo, hi){
+        return halfRound(clamp(lo + Math.random()*(hi-lo), lo, hi))
+      }
+      function randomStart(ranges){
+        return {
+          g: randHalf(ranges.grains[0], ranges.grains[1]),
+          p: randHalf(ranges.proteins[0], ranges.proteins[1]),
+          d: randHalf(ranges.dairy[0], ranges.dairy[1]),
+          v: randHalf(ranges.veg[0], ranges.veg[1]),
+          r: randHalf(ranges.fruit[0], ranges.fruit[1]),
+          o: randHalf(Math.max(3, ranges.oils[0]), ranges.oils[1]),
         }
       }
-      let adjustments = []
-      if (!macroStrict){
-        if (best.x6 < 3) { best.x6 = 3; adjustments.push('Raised oils to minimum 3 servings') }
-        if (best.x4 !== vegetables) adjustments.push('Adjusted vegetables within range to reduce energy gap')
-        if (best.x5 !== fruits) adjustments.push('Adjusted fruits within range to reduce energy gap')
+      function searchBest(ranges, tries){
+        let best = null
+        const seed = estimateSequential(ranges)
+        const seedBest = refine(seed, ranges)
+        if (seedBest) best = seedBest
+        for (let i = 0; i < tries; i++){
+          const start = randomStart(ranges)
+          const cand = refine(start, ranges)
+          if (cand) best = chooseBetter(best, cand)
+        }
+        return best
       }
-      const tfin = totals(best.x1,best.x2,best.x3,best.x4,best.x5,best.x6)
+      let best = searchBest(strictRanges, 28)
+      if (!best){
+        best = searchBest(relaxedRanges, 44)
+        if (best) adjustments.push('Relaxed upper serving limits to satisfy constraints')
+      }
+      if (!best){
+        best = searchBest(fallbackRanges, 60)
+        if (best) adjustments.push('Relaxed serving limits to find a feasible solution')
+      }
+      if (!best){
+        setConstraints(0.03, 5)
+        adjustments.push('Relaxed macro and energy tolerances to find a feasible solution')
+        best = searchBest(fallbackRanges, 80) || searchBest(relaxedRanges, 80) || searchBest(strictRanges, 80)
+      }
+      if (!best){
+        setConstraints(0.05, 8)
+        adjustments.push('Further relaxed tolerances to find any feasible solution')
+        best = searchBest(fallbackRanges, 120) || searchBest(relaxedRanges, 120) || searchBest(strictRanges, 120)
+      }
+      if (!best){
+        const baseGrains = halfRound(Math.max(0, (carbTargetG - 1*FOOD.dairyLow.c - 3*FOOD.veg.c - 2*FOOD.fruit.c) / FOOD.grains.c))
+        const baseProteins = halfRound(Math.max(0, (proteinTargetG - 1*FOOD.dairyLow.p - 3*FOOD.veg.p - baseGrains*FOOD.grains.p) / FOOD.proteinLow.p))
+        const baseOils = halfRound(Math.max(3, (fatTargetG - 1*FOOD.dairyLow.f - baseProteins*FOOD.proteinLow.f) / FOOD.oil.f))
+        const t = totals(baseGrains, baseProteins, 1, 3, 2, baseOils)
+        best = { g:baseGrains, p:baseProteins, d:1, v:3, r:2, o:baseOils, t, sse:Infinity, energyGap:Math.abs(t.totalE-kcal), exceed:0 }
+        adjustments.push('Used heuristic fallback; tolerances may be exceeded')
+      }
+      const tfin = best.t || totals(best.g, best.p, best.d, best.v, best.r, best.o)
       const rr = v => Math.round(v*2)/2
       return {
         kcal,
         targets: {
-          'Grains': rr(best.x1),
-          'Proteins': rr(best.x2),
-          'Dairy': rr(best.x3),
-          'Vegetables': rr(best.x4),
-          'Fruits': rr(best.x5),
-          'Oils and Nuts': rr(best.x6),
+          'Grains': rr(best.g),
+          'Proteins': rr(best.p),
+          'Dairy': rr(best.d),
+          'Vegetables': rr(best.v),
+          'Fruits': rr(best.r),
+          'Oils and Nuts': rr(best.o),
         },
         macros: {
           carbsG: Math.round(tfin.carbsG*10)/10,
@@ -844,30 +1287,14 @@
       macroFatLabelEl.textContent = f + '%'
       macroCarbLabelEl.textContent = c + '%'
       const total = p + f + c
-      const remain = Math.max(0, 100 - total)
-      macroTotalEl.textContent = `Total: ${total}% (Remaining ${remain}%)`
+      const delta = 100 - total
+      macroTotalEl.textContent = delta >= 0
+        ? `Total: ${total}% (Remaining ${delta}%)`
+        : `Total: ${total}% (Over by ${Math.abs(delta)}%)`
+      macroTotalEl.classList.toggle('warn', delta !== 0)
+      updateNextFromInputEnabled()
     }
     function enforceMacroSum(e){
-      const src = e.target.id
-      let p = +macroProteinEl.value
-      let f = +macroFatEl.value
-      let c = +macroCarbEl.value
-      function clampToRemaining(current, other1, other2, min, max){
-        const remaining = 100 - (other1 + other2)
-        const desired = current
-        const capped = Math.min(desired, Math.max(min, remaining))
-        return Math.max(min, Math.min(max, capped))
-      }
-      if (src === 'macroProtein'){
-        p = clampToRemaining(p, f, c, +macroProteinEl.min, +macroProteinEl.max)
-        macroProteinEl.value = Math.round(p)
-      } else if (src === 'macroFat'){
-        f = clampToRemaining(f, p, c, +macroFatEl.min, +macroFatEl.max)
-        macroFatEl.value = Math.round(f)
-      } else if (src === 'macroCarb'){
-        c = clampToRemaining(c, p, f, +macroCarbEl.min, +macroCarbEl.max)
-        macroCarbEl.value = Math.round(c)
-      }
       updateMacroLabels()
     }
     ;['input','change'].forEach(ev=>{
@@ -885,30 +1312,14 @@
       macroFatProfileLabelEl.textContent = f + '%'
       macroCarbProfileLabelEl.textContent = c + '%'
       const total = p + f + c
-      const remain = Math.max(0, 100 - total)
-      macroTotalProfileEl.textContent = `Total: ${total}% (Remaining ${remain}%)`
+      const delta = 100 - total
+      macroTotalProfileEl.textContent = delta >= 0
+        ? `Total: ${total}% (Remaining ${delta}%)`
+        : `Total: ${total}% (Over by ${Math.abs(delta)}%)`
+      macroTotalProfileEl.classList.toggle('warn', delta !== 0)
+      updateNextToPortionsFromEnergyEnabled()
     }
     function enforceMacroSumProfile(e){
-      const src = e.target.id
-      let p = +macroProteinProfileEl.value
-      let f = +macroFatProfileEl.value
-      let c = +macroCarbProfileEl.value
-      function clampToRemaining(current, other1, other2, min, max){
-        const remaining = 100 - (other1 + other2)
-        const desired = current
-        const capped = Math.min(desired, Math.max(min, remaining))
-        return Math.max(min, Math.min(max, capped))
-      }
-      if (src === 'macroProteinProfile'){
-        p = clampToRemaining(p, f, c, +macroProteinProfileEl.min, +macroProteinProfileEl.max)
-        macroProteinProfileEl.value = Math.round(p)
-      } else if (src === 'macroFatProfile'){
-        f = clampToRemaining(f, p, c, +macroFatProfileEl.min, +macroFatProfileEl.max)
-        macroFatProfileEl.value = Math.round(f)
-      } else if (src === 'macroCarbProfile'){
-        c = clampToRemaining(c, p, f, +macroCarbProfileEl.min, +macroCarbProfileEl.max)
-        macroCarbProfileEl.value = Math.round(c)
-      }
       updateMacroLabelsProfile()
     }
     ;['input','change'].forEach(ev=>{
@@ -942,11 +1353,13 @@
       touch: { active: false, x: 0, y: 0, id: null, shooting: false },
       lives: 5,
       energyKcal: 0,
+      energyLabel: 'Target Energy',
+      dairyType: 'low',
       targets: {},
       consumed: {},
       spawnCounts: {},
     }
-    for (const n of FOOD_GROUPS){ state.consumed[n.key] = 0; state.spawnCounts[n.key] = 0 }
+    for (const n of GAME_GROUPS){ state.consumed[n.key] = 0; state.spawnCounts[n.key] = 0 }
     function setMobileControlsVisible(on){
       if (!mobileControlsEl) return
       mobileControlsEl.style.display = on ? 'flex' : 'none'
@@ -1059,14 +1472,19 @@
           c: warm ? 'rgba(255,248,230,1)' : 'rgba(160,220,255,1)'
         })
       }
-      for (const n of FOOD_GROUPS){ state.consumed[n.key] = 0; state.spawnCounts[n.key] = 0 }
+      for (const n of GAME_GROUPS){ state.consumed[n.key] = 0; state.spawnCounts[n.key] = 0 }
       overlay.style.display = 'none'
       nextBtn.style.display = 'none'
       state.player.r = 16
       livesEl.textContent = 'Lives ' + state.lives
       setMobileControlsVisible(isTouchDevice)
+      updateGameEnergyUI()
     }
     restartBtn.addEventListener('click', reset)
+    function updateGameEnergyUI(){
+      const macros = computeMacrosFromTargets(state.consumed, state.dairyType)
+      energyEl.textContent = `Energy ${macros.totalKcal} / ${formatKcal(state.energyLabel, state.energyKcal)} kcal`
+    }
     function showEndOverlay(){
       if (endPanel) endPanel.style.display = 'block'
       if (controlsPanel) controlsPanel.style.display = 'none'
@@ -1125,17 +1543,141 @@
       return String(Math.round(+kcal))
     }
     function showStep(step){
+      setup && (setup.dataset.step = step)
+      stepHomeEl && stepHomeEl.classList.toggle('active', step === 'home')
       stepInputEl.classList.toggle('active', step === 'input')
       stepEnergyEl.classList.toggle('active', step === 'energy')
       stepPortionsEl.classList.toggle('active', step === 'portions')
+      stepManualEl && stepManualEl.classList.toggle('active', step === 'manual')
+      if (setupTitleEl){
+        setupTitleEl.textContent = (step === 'portions' || step === 'manual')
+          ? 'Check Your Food Servings'
+          : (step === 'home' ? 'Portion Based Menu Design' : 'Set Your Energy Intake & Macronutrient Ratios')
+      }
       if (step === 'input') setupSubtitleEl.textContent = 'Choose a mode to compute today’s targets'
       if (step === 'energy') setupSubtitleEl.textContent = 'Confirm the computed energy'
       if (step === 'portions') setupSubtitleEl.textContent = 'Confirm today’s portion targets'
+    }
+
+    function dairySpecFromType(dairyType){
+      const t = dairyType || 'low'
+      return t === 'skim'
+        ? { c:12, p:8, f:0, kcal:80, label:'Dairy (skim)' }
+        : t === 'full'
+          ? { c:12, p:8, f:8, kcal:150, label:'Dairy (full-fat)' }
+          : { c:12, p:8, f:4, kcal:120, label:'Dairy (low-fat)' }
+    }
+
+    function computeMacrosFromTargets(targets, dairyType){
+      const dairy = dairySpecFromType(dairyType)
+      const per = {
+        'Fruits': { c:15, p:0, f:0, kcal:60, label:'Fruits' },
+        'Vegetables': { c:5, p:1, f:0, kcal:25, label:'Vegetables' },
+        'Dairy': { ...dairy },
+        'Grains': { c:15, p:2, f:0, kcal:70, label:'Grains' },
+        'Proteins': { c:0, p:7, f:3, kcal:55, label:'Beans, Fish, Eggs, and Meat（low-fat）' },
+        'Oils and Nuts': { c:0, p:0, f:5, kcal:45, label:'Oils and Nuts' },
+      }
+      const proteinsMidFat = { c:0, p:7, f:5, kcal:75, label:'Beans, Fish, Eggs, and Meat（medium-fat）' }
+      const sum = { c:0, p:0, f:0, kcal:0 }
+      for (const n of FOOD_GROUPS){
+        const s = +((targets[n.key] ?? 0) || 0)
+        const m = per[n.key] || { c:0, p:0, f:0, kcal:0 }
+        sum.c += s*m.c
+        sum.p += s*m.p
+        sum.f += s*m.f
+        sum.kcal += s*m.kcal
+      }
+      const proteinsMediumServings = +((targets['Proteins_medium'] ?? 0) || 0)
+      if (proteinsMediumServings){
+        sum.c += proteinsMediumServings * proteinsMidFat.c
+        sum.p += proteinsMediumServings * proteinsMidFat.p
+        sum.f += proteinsMediumServings * proteinsMidFat.f
+        sum.kcal += proteinsMediumServings * proteinsMidFat.kcal
+      }
+      const cE = sum.c*4
+      const pE = sum.p*4
+      const fE = sum.f*9
+      const totalE = cE+pE+fE
+      const pct = (x) => totalE ? Math.round((x/totalE*100)*10)/10 : 0
+      return {
+        carbsG: Math.round(sum.c*10)/10,
+        proteinG: Math.round(sum.p*10)/10,
+        fatG: Math.round(sum.f*10)/10,
+        totalKcal: Math.round(totalE),
+        carbsPct: pct(cE),
+        proteinPct: pct(pE),
+        fatPct: pct(fE),
+      }
+    }
+
+    function getManualTargets(){
+      const out = {}
+      const inputs = manualPortionReviewEl.querySelectorAll('.manual-serving')
+      for (const el of inputs){
+        const key = el.getAttribute('data-key')
+        let v = parseFloat(el.value)
+        if (!isFinite(v)) v = 0
+        v = Math.max(0, v)
+        out[key] = halfRound(v)
+      }
+      return out
+    }
+
+    function renderManualReview(targets){
+      const dairyType = pending?.result?.assumptions?.dairyType || 'low'
+      const macros = computeMacrosFromTargets(targets, dairyType)
+      const mt = pending?.macroTarget
+      const result = {
+        kcal: pending?.kcal,
+        targets,
+        macros,
+        assumptions: {
+          dairyType,
+          proteinType: pending?.result?.assumptions?.proteinType || 'low-fat',
+          macroTarget: mt || { cPct: 55, pPct: 20, fPct: 25 },
+          macroSource: 'manual'
+        }
+      }
+      pending.result = result
+      pending.targets = targets
+      manualEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.kcal)} kcal`
+      renderPortionReview(result)
+      renderPortionReviewInto(result, manualPortionReviewEl, manualBreakdownTableEl, manualMacroReviewEl, manualMacroSummaryEl, true)
     }
     function updateModeUI(){
       const mode = modeInputs().find(i=>i.checked)?.value || 'target'
       document.getElementById('targetSection').classList.toggle('active', mode==='target')
       document.getElementById('profileSection').classList.toggle('active', mode==='profile')
+      updateNextFromInputEnabled()
+    }
+    function updateNextFromInputEnabled(){
+      if (!nextFromInputBtn) return
+      const mode = modeInputs().find(i=>i.checked)?.value || 'target'
+      if (mode !== 'target'){
+        nextFromInputBtn.disabled = false
+        return
+      }
+      const p = Math.round(+macroProteinEl.value)
+      const f = Math.round(+macroFatEl.value)
+      const c = Math.round(+macroCarbEl.value)
+      nextFromInputBtn.disabled = (p + f + c) !== 100
+    }
+    function updateNextToPortionsFromEnergyEnabled(){
+      if (!nextToPortionsFromEnergyBtn) return
+      const macroMode = (document.querySelector('input[name="macroModeProfile"]:checked')?.value) || 'auto'
+      if (macroMode !== 'custom'){
+        nextToPortionsFromEnergyBtn.disabled = false
+        return
+      }
+      if (!macroProteinProfileEl || !macroFatProfileEl || !macroCarbProfileEl){
+        nextToPortionsFromEnergyBtn.disabled = false
+        return
+      }
+      const p = Math.round(+macroProteinProfileEl.value)
+      const f = Math.round(+macroFatProfileEl.value)
+      const c = Math.round(+macroCarbProfileEl.value)
+      nextToPortionsFromEnergyBtn.disabled = (p + f + c) !== 100
     }
     function updateStressUI(){
       const v = stressEl.value
@@ -1155,14 +1697,26 @@
         stressValueEl.style.display = 'none'
       }
     }
-    function renderPortionReview(result){
+    function renderPortionReviewInto(result, portionEl, breakdownEl, notesEl, summaryEl, editable){
       const targets = result.targets || result
       const html = []
       for (const n of FOOD_GROUPS){
         const tar = targets[n.key] ?? 0
-        html.push(`<label><span>${n.label} (servings)</span><input value="${tar}" readonly></label>`)
+        if (editable){
+          html.push(`<label><span>${n.label} (servings)</span><input class="manual-serving" data-key="${n.key}" type="number" min="0" step="0.5" value="${tar}"></label>`)
+        } else {
+          html.push(`<label><span>${n.label} (servings)</span><input value="${tar}" readonly></label>`)
+        }
+        if (n.key === 'Proteins'){
+          const tarMid = targets['Proteins_medium'] ?? 0
+          if (editable){
+            html.push(`<label><span>Beans, Fish, Eggs, and Meat（medium-fat） (servings)</span><input class="manual-serving" data-key="Proteins_medium" type="number" min="0" step="0.5" value="${tarMid}"></label>`)
+          } else {
+            html.push(`<label><span>Beans, Fish, Eggs, and Meat（medium-fat） (servings)</span><input value="${tarMid}" readonly></label>`)
+          }
+        }
       }
-      portionReviewEl.innerHTML = html.join('')
+      portionEl.innerHTML = html.join('')
       const dairyType = result?.assumptions?.dairyType || 'low'
       const dairy = dairyType === 'skim'
         ? { c:12, p:8, f:0, kcal:80, label:'Dairy (skim)' }
@@ -1177,6 +1731,7 @@
         'Proteins': { c:0, p:7, f:3, kcal:55, label:'Beans, Fish, Eggs, and Meat（low-fat）' },
         'Oils and Nuts': { c:0, p:0, f:5, kcal:45, label:'Oils and Nuts' },
       }
+      const proteinsMidFat = { c:0, p:7, f:5, kcal:75, label:'Beans, Fish, Eggs, and Meat（medium-fat）' }
       const sum = { servings:0, c:0, p:0, f:0, kcal:0 }
       const rows = []
       for (const n of FOOD_GROUPS){
@@ -1198,23 +1753,95 @@
         `<table class="tbl">`,
         `<thead><tr><th>Food Group</th><th class="num">Servings</th><th>Per serving (C/P/F)</th><th class="num">Total C (g)</th><th class="num">Total P (g)</th><th class="num">Total F (g)</th></tr></thead>`,
         `<tbody>`,
-        ...rows.map(r=>`<tr><td>${r.label}</td><td class="num">${fmt(r.s)}</td><td>${fmt(r.m.c)}/${fmt(r.m.p)}/${fmt(r.m.f)} g</td><td class="num">${fmt(r.tc)}</td><td class="num">${fmt(r.tp)}</td><td class="num">${fmt(r.tf)}</td></tr>`),
+        ...rows.flatMap(r=>{
+          const out = [
+            `<tr><td>${r.label}</td><td class="num">${fmt(r.s)}</td><td>${fmt(r.m.c)}/${fmt(r.m.p)}/${fmt(r.m.f)} g</td><td class="num">${fmt(r.tc)}</td><td class="num">${fmt(r.tp)}</td><td class="num">${fmt(r.tf)}</td></tr>`
+          ]
+          if (r.key === "Proteins") {
+            const s = +((targets['Proteins_medium'] ?? 0) || 0)
+            const tc = s * proteinsMidFat.c
+            const tp = s * proteinsMidFat.p
+            const tf = s * proteinsMidFat.f
+            sum.servings += s
+            sum.c += tc
+            sum.p += tp
+            sum.f += tf
+            sum.kcal += s * proteinsMidFat.kcal
+            out.push(
+              `<tr><td>${proteinsMidFat.label}</td><td class="num">${fmt(s)}</td><td>${fmt(proteinsMidFat.c)}/${fmt(proteinsMidFat.p)}/${fmt(proteinsMidFat.f)} g</td><td class="num">${fmt(tc)}</td><td class="num">${fmt(tp)}</td><td class="num">${fmt(tf)}</td></tr>`
+            )
+          }
+          return out
+        }),
         `<tr><td><strong>Total</strong></td><td class="num"></td><td></td><td class="num"><strong>${fmt(sum.c)}</strong></td><td class="num"><strong>${fmt(sum.p)}</strong></td><td class="num"><strong>${fmt(sum.f)}</strong></td></tr>`,
         `</tbody></table>`
       ].join('')
-      breakdownTableEl.innerHTML = tableHtml
+      breakdownEl.innerHTML = tableHtml
       if (result.macros){
-        const src = result?.assumptions?.macroSource
-        const mt = result?.assumptions?.macroTarget
-        let txt = `Typical guideline : Protein 10–20%, Fat 20–30%, Carbs 50–60%`
-        if (src === 'custom' && mt){
-          txt += `\nYour setting: Protein ${mt.pPct}%, Fat ${mt.fPct}%, Carbs ${mt.cPct}%`
-        }
-        txt += `\n\nCarbs: ${result.macros.carbsG} g (${result.macros.carbsPct}%)\nProtein: ${result.macros.proteinG} g (${result.macros.proteinPct}%)\nFat: ${result.macros.fatG} g (${result.macros.fatPct}%)\n\nEstimated total from macros: ${result.macros.totalKcal} kcal`
-        macroReviewEl.textContent = txt
+        const mt = result?.assumptions?.macroTarget || { cPct: 55, pPct: 20, fPct: 25 }
+        const kcalBase = isFinite(+result?.kcal) ? +result.kcal : (isFinite(+pending?.kcal) ? +pending.kcal : NaN)
+        const setCarbG = isFinite(kcalBase) ? Math.round((kcalBase * (mt.cPct/100)) / 4) : null
+        const setProteinG = isFinite(kcalBase) ? Math.round((kcalBase * (mt.pPct/100)) / 4) : null
+        const setFatG = isFinite(kcalBase) ? Math.round((kcalBase * (mt.fPct/100)) / 9) : null
+        const setLine = (setCarbG == null || setProteinG == null || setFatG == null)
+          ? `＊Your setting: Carbohydrates ${mt.cPct}%, Protein ${mt.pPct}%, Fat ${mt.fPct}%`
+          : `＊Your setting: Carbohydrates ${mt.cPct}%（${setCarbG} g）, Protein ${mt.pPct}%（${setProteinG} g）, Fat ${mt.fPct}%（${setFatG} g）`
+        const notesTxt = [
+          `＊Typical guideline:`,
+          `(1) Macronutrient Distribution`,
+          `Carbohydrates 50–60%, Protein 10–20%, Fat 20–30%`,
+          `(2) Recommended Daily Servings`,
+          `Grains: 1.5–4 bowls (approx. 10–20 servings)`,
+          `Beans, Fish, Eggs and Meat: 4–8 servings`,
+          `Dairy: 1.5–2 servings`,
+          `Vegetables: 3–5 servings`,
+          `Fruits: 2–4 servings`,
+          `Oils and Nuts: 3–7 teaspoons of oil or 1 serving of nuts/seeds`,
+        ].join('\n')
+        const pctFmt = (v) => (Math.round((+v || 0) * 10) / 10).toFixed(1).replace(/\.0$/,'')
+        const clampPct = (v) => Math.max(0, Math.min(100, (+v || 0)))
+        const mkBar = (cPct, pPct, fPct) => (
+          `<div class="stack-bar">` +
+          `<div class="stack-seg c" style="width:${clampPct(cPct)}%"></div>` +
+          `<div class="stack-seg p" style="width:${clampPct(pPct)}%"></div>` +
+          `<div class="stack-seg f" style="width:${clampPct(fPct)}%"></div>` +
+          `</div>`
+        )
+        const targetKcalLabel = pending?.energyLabel || 'Target Energy'
+        const targetKcalText = isFinite(kcalBase) ? `${formatKcal(targetKcalLabel, kcalBase)} kcal` : '—'
+        const kcalDelta = isFinite(kcalBase) ? (result.macros.totalKcal - kcalBase) : NaN
+        const kcalDeltaText = isFinite(kcalDelta)
+          ? `${kcalDelta >= 0 ? '+' : '−'}${Math.abs(Math.round(kcalDelta))} kcal`
+          : '—'
+        const summaryHtml = [
+          `<div class="macro-summary">`,
+          `<div class="macro-lines">`,
+          `<div>${setLine}</div>`,
+          `<div>＊Calculated Macronutrients (Based on Portions)： Carbohydrates: ${result.macros.carbsG}g (${pctFmt(result.macros.carbsPct)}%), Protein: ${result.macros.proteinG}g (${pctFmt(result.macros.proteinPct)}%), Fat: ${result.macros.fatG}g (${pctFmt(result.macros.fatPct)}%)</div>`,
+          `<div>→ Total Energy: (${result.macros.carbsG}g × 4) + (${result.macros.proteinG}g × 4) + (${result.macros.fatG}g × 9) = ${result.macros.totalKcal} kcal</div>`,
+          `<div>Energy difference vs ${targetKcalText}: ${kcalDeltaText}</div>`,
+          `</div>`,
+          `<div class="macro-viz">`,
+          `<div class="macro-legend">`,
+          `<span class="item"><span class="swatch c"></span>Carbohydrates</span>`,
+          `<span class="item"><span class="swatch p"></span>Protein</span>`,
+          `<span class="item"><span class="swatch f"></span>Fat</span>`,
+          `</div>`,
+          `<div class="macro-bar-row"><div class="macro-bar-label">Target</div>${mkBar(mt.cPct, mt.pPct, mt.fPct)}</div>`,
+          `<div class="macro-bar-row"><div class="macro-bar-label">Actual</div>${mkBar(result.macros.carbsPct, result.macros.proteinPct, result.macros.fatPct)}</div>`,
+          `</div>`,
+          `</div>`
+        ].join('')
+        if (notesEl) notesEl.textContent = notesTxt
+        if (summaryEl) summaryEl.innerHTML = summaryHtml
       } else {
-        macroReviewEl.textContent = ''
+        if (notesEl) notesEl.textContent = ''
+        if (summaryEl) summaryEl.innerHTML = ''
       }
+    }
+
+    function renderPortionReview(result){
+      renderPortionReviewInto(result, portionReviewEl, breakdownTableEl, macroReviewEl, macroSummaryEl, false)
     }
     function buildEnergyFormulaText({ sex, age, height, weight, activity, stress, bee, kcal }){
       const base = sex === 'male'
@@ -1224,7 +1851,8 @@
     }
     modeInputs().forEach(i=> i.addEventListener('change', updateModeUI))
     updateModeUI()
-    showStep('input')
+    showStep('home')
+    getStartedBtn && getStartedBtn.addEventListener('click', () => showStep('input'))
     stressEl.addEventListener('change', updateStressUI)
     updateStressUI()
     nextFromInputBtn.addEventListener('click', () => {
@@ -1254,15 +1882,20 @@
       if (mode === 'target'){
         const override = +document.getElementById('kcal').value
         if (!isFinite(override) || override <= 0){ showToast('Please enter a valid target energy','error'); return }
-        let pPct = +macroProteinEl.value, fPct = +macroFatEl.value, cPct = +macroCarbEl.value
-        if (!isFinite(pPct) || !isFinite(fPct) || !isFinite(cPct) || pPct <= 0 || fPct <= 0 || cPct <= 0){ showToast('Please enter valid macro percentages for Protein/Fat/Carbs','error'); return }
-        const sumPct = Math.round((pPct + fPct + cPct)*10)/10
-        if (sumPct !== 100){ showToast('Macros must sum to 100%','error'); return }
+        const mp = Math.round(+macroProteinEl.value)
+        const mf = Math.round(+macroFatEl.value)
+        const mc = Math.round(+macroCarbEl.value)
+        if ((mp + mf + mc) !== 100){
+          showToast('Macronutrients total must be 100%','error')
+          return
+        }
+        const norm = normalizeMacroInts(+macroProteinEl.value, +macroFatEl.value, +macroCarbEl.value)
+        if (!norm){ showToast('Please set at least one macro value above 0%','error'); return }
         pending.kcal = Math.round(override)
         pending.energyLabel = 'Target Energy'
-        pending.macroTarget = { cPct: cPct, pPct: pPct, fPct: fPct }
+        pending.macroTarget = { cPct: norm.cPct, pPct: norm.pPct, fPct: norm.fPct }
         pending.result = targetsForEnergy(pending.kcal, pending.macroTarget, 'custom')
-        pending.targets = pending.result.targets
+        pending.targets = { ...pending.result.targets, Proteins_medium: 0 }
         portionEnergyValueEl.textContent = `${pending.energyLabel}: ${pending.kcal} kcal`
         renderPortionReview(pending.result)
         showStep('portions')
@@ -1289,29 +1922,60 @@
       let macroTarget = { cPct: 55, pPct: 20, fPct: 25 }
       const macroMode = (document.querySelector('input[name="macroModeProfile"]:checked')?.value) || 'auto'
       if (macroMode === 'custom'){
-        let pPct = +macroProteinProfileEl.value, fPct = +macroFatProfileEl.value, cPct = +macroCarbProfileEl.value
-        const sumPct = Math.round((pPct + fPct + cPct)*10)/10
-        if (sumPct !== 100){ showToast('Macros must sum to 100%','error'); return }
-        macroTarget = { cPct: cPct, pPct: pPct, fPct: fPct }
+        const mp = Math.round(+macroProteinProfileEl.value)
+        const mf = Math.round(+macroFatProfileEl.value)
+        const mc = Math.round(+macroCarbProfileEl.value)
+        if ((mp + mf + mc) !== 100){
+          showToast('Macronutrients total must be 100%','error')
+          return
+        }
+        const norm = normalizeMacroInts(+macroProteinProfileEl.value, +macroFatProfileEl.value, +macroCarbProfileEl.value)
+        if (!norm){ showToast('Please set at least one macro value above 0%','error'); return }
+        macroTarget = { cPct: norm.cPct, pPct: norm.pPct, fPct: norm.fPct }
       }
       pending.macroTarget = macroTarget
       pending.macroMode = macroMode
       pending.result = targetsForEnergy(pending.kcal, macroTarget, macroMode)
-      pending.targets = pending.result.targets
+      pending.targets = { ...pending.result.targets, Proteins_medium: 0 }
       portionEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.kcal)} kcal`
       renderPortionReview(pending.result)
       showStep('portions')
     })
     backToInputFromPortionsBtn.addEventListener('click', () => showStep('input'))
+
+    adjustPortionsManuallyBtn && adjustPortionsManuallyBtn.addEventListener('click', () => {
+      const targets = pending.targets || pending.result?.targets || targetsForEnergy(pending.kcal, pending.macroTarget, pending.macroMode).targets
+      renderManualReview(targets)
+      showStep('manual')
+    })
+
+    manualEstimateBtn && manualEstimateBtn.addEventListener('click', () => {
+      const targets = getManualTargets()
+      renderManualReview(targets)
+    })
+
+    manualBackBtn && manualBackBtn.addEventListener('click', () => {
+      pending.result && renderPortionReview(pending.result)
+      showStep('portions')
+    })
     function doStartGame(){
-      state.energyKcal = pending.kcal
-      state.targets = pending.targets || targetsForEnergy(state.energyKcal).targets
-      energyEl.textContent = `${pending.energyLabel} ${formatKcal(pending.energyLabel, state.energyKcal)} kcal`
+      const energyInputKcal = pending.kcal
+      state.energyLabel = pending.energyLabel
+      state.dairyType = pending?.result?.assumptions?.dairyType || 'low'
+      const base = pending.targets || targetsForEnergy(energyInputKcal).targets
+      state.targets = { ...base, Proteins_medium: base.Proteins_medium ?? 0 }
+      state.energyKcal = computeMacrosFromTargets(state.targets, state.dairyType).totalKcal
+      updateGameEnergyUI()
       setup.style.display = 'none'
       overlay.style.display = 'none'
       reset()
     }
     startGameBtn.addEventListener('click', () => {
+      showControlsOverlay()
+    })
+    manualStartGameBtn && manualStartGameBtn.addEventListener('click', () => {
+      const targets = getManualTargets()
+      renderManualReview(targets)
       showControlsOverlay()
     })
     controlsBackBtn.addEventListener('click', () => {
@@ -1346,16 +2010,15 @@
           const y = -30
           const speed = rand(110, 200)
           const counts = { ...state.spawnCounts }
-          const minCount = Math.min(...FOOD_GROUPS.map(n=>counts[n.key]||0))
-          const candidates = FOOD_GROUPS.filter(n=> (counts[n.key]||0) === minCount)
+          const minCount = Math.min(...GAME_GROUPS.map(n=>counts[n.key]||0))
+          const candidates = GAME_GROUPS.filter(n=> (counts[n.key]||0) === minCount)
           const pick = candidates[Math.floor(Math.random()*candidates.length)]
-          const textW = ctx.measureText(labelOf(pick.key)).width
+          const spawnLabel = labelOf(pick.key)
+          const textW = ctx.measureText(spawnLabel).width
           const w = Math.max(80, textW + 24)
           const h = 28
           const x = rand(w/2 + 40, W - w/2 - 40)
           ctx.restore()
-          const types = ['cyclops','slime','robot','bug','ghost']
-          const type = types[Math.floor(Math.random()*types.length)]
           const specialRoll = Math.random()
           if (specialRoll < 0.06){
             const c = {
@@ -1372,14 +2035,12 @@
             const c = {
               x, y, w, h,
               vx: rand(-60,60), vy: speed,
-              key: pick.key, label: labelOf(pick.key), color: pick.color,
+              key: pick.key, label: spawnLabel, color: pick.color,
               phase: rand(0, Math.PI*2), skew: rand(-0.25, 0.25),
               headR: rand(10,16),
-              eyeCount: type==='cyclops' ? 1 : (type==='robot' ? 2 : (Math.random()<0.7 ? 2 : 3)),
-              antenna: Math.random()<0.6 ? 1 : (Math.random()<0.3 ? 2 : 0),
               swayAmp: rand(12,28),
-              alienColor: ['#b7f0ea','#a0e7e5','#ffd1dc','#c7f5ff','#e3fdfd'][Math.floor(Math.random()*5)],
-              alienType: type
+              alienType: 'food',
+              foodKey: pick.key
             }
             state.circles.push(c)
             state.spawnCounts[pick.key] = (state.spawnCounts[pick.key]||0) + 1
@@ -1470,7 +2131,7 @@
               if (after > target){
                 state.running = false
                 showEndOverlay()
-                document.getElementById('gameover').textContent = key + ' exceeded target. Game Over'
+                document.getElementById('gameover').textContent = labelOf(key) + ' exceeded target. Game Over'
                 nextBtn.style.display = 'inline-block'
               }
               for (let k=0;k<8;k++){
@@ -1526,7 +2187,7 @@
         if (pz.life <= 0) state.particles.splice(i,1)
       }
       const chips = []
-      for (const n of FOOD_GROUPS){
+      for (const n of GAME_GROUPS){
         const tar = state.targets[n.key] ?? 0
         const cur = state.consumed[n.key] ?? 0
         const pct = tar > 0 ? Math.min(1, cur / tar) : 0
@@ -1535,9 +2196,10 @@
         chips.push(`<div class="chip${exceeded ? ' exceeded' : ''}" style="--chip-color:${col}"><div class="label">${n.label}</div><div class="val">${cur} / ${tar}</div><div class="bar"><div class="fill" style="width:${(pct*100).toFixed(0)}%"></div></div></div>`)
       }
       targetsEl.innerHTML = chips.join('')
+      updateGameEnergyUI()
       timerEl.textContent = 'Time ' + state.time.toFixed(1) + 's'
       let allExact = true
-      for (const n of FOOD_GROUPS){
+      for (const n of GAME_GROUPS){
         const tar = state.targets[n.key]
         const cur = state.consumed[n.key]
         if (!isFinite(tar)) { allExact = false; break }
@@ -1711,6 +2373,50 @@
       ctx.fill()
       strokeTwice(() => rrect(-5.5, 8, 11, 9, 4), inkSoft, 1.6, Math.sin(phaseP*6.1)*0.5, Math.cos(phaseP*5.7)*0.5, 0.55, 0.35)
 
+      const beltG = ctx.createLinearGradient(-12, 16, 12, 22)
+      beltG.addColorStop(0, 'rgba(84,96,108,.78)')
+      beltG.addColorStop(1, 'rgba(52,62,72,.78)')
+      ctx.fillStyle = beltG
+      rrect(-12, 16.5, 24, 5.2, 2.8)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(255,255,255,.14)'
+      rrect(-11, 17.3, 22, 3.6, 2.4)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(230,236,244,.86)'
+      rrect(-2.8, 16.9, 5.6, 4.4, 1.8)
+      ctx.fill()
+      strokeTwice(() => rrect(-12, 16.5, 24, 5.2, 2.8), inkSoft, 1.7, Math.sin(phaseP*5.2)*0.4, Math.cos(phaseP*4.8)*0.4, 0.55, 0.35)
+
+      ctx.save()
+      ctx.translate(-6.2, 11.8)
+      const patchG = ctx.createRadialGradient(-1.5, -1.8, 1, 0, 0, 4.8)
+      patchG.addColorStop(0, 'rgba(255,255,255,.95)')
+      patchG.addColorStop(1, 'rgba(120,150,210,.92)')
+      ctx.fillStyle = patchG
+      ctx.beginPath()
+      ctx.arc(0, 0, 4.8, 0, Math.PI*2)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(32,40,56,.78)'
+      ctx.beginPath()
+      ctx.arc(0, 0, 3.2, 0, Math.PI*2)
+      ctx.fill()
+      ctx.fillStyle = 'rgba(255,230,120,.92)'
+      ctx.beginPath()
+      ctx.moveTo(0, -2.0)
+      ctx.lineTo(0.8, -0.2)
+      ctx.lineTo(2.6, -0.2)
+      ctx.lineTo(1.1, 0.9)
+      ctx.lineTo(1.7, 2.6)
+      ctx.lineTo(0, 1.5)
+      ctx.lineTo(-1.7, 2.6)
+      ctx.lineTo(-1.1, 0.9)
+      ctx.lineTo(-2.6, -0.2)
+      ctx.lineTo(-0.8, -0.2)
+      ctx.closePath()
+      ctx.fill()
+      strokeTwice(() => { ctx.beginPath(); ctx.arc(0, 0, 4.8, 0, Math.PI*2) }, inkSoft, 1.4, Math.sin(phaseP*4.4)*0.35, Math.cos(phaseP*4.0)*0.35, 0.55, 0.35)
+      ctx.restore()
+
       ctx.fillStyle = 'rgba(214,224,232,.96)'
       ctx.beginPath()
       ctx.ellipse(-13.5, 9.5, 5.0, 5.6, 0, 0, Math.PI*2)
@@ -1744,6 +2450,19 @@
       ctx.arc(0, -14, helmetR, 0, Math.PI*2)
       ctx.fill()
       strokeTwice(() => { ctx.beginPath(); ctx.arc(0, -14, helmetR, 0, Math.PI*2) }, ink, 2.4, Math.sin(phaseP*4.2)*0.7, Math.cos(phaseP*3.8)*0.7, 0.85, 0.5)
+
+      ctx.strokeStyle = 'rgba(84,96,108,.70)'
+      ctx.lineWidth = 3.2
+      ctx.beginPath()
+      ctx.moveTo(7.5, -9.5)
+      ctx.bezierCurveTo(15.5, -6.5, 18.5, 0.5, 12.5, 6.8)
+      ctx.stroke()
+      ctx.strokeStyle = 'rgba(230,236,244,.60)'
+      ctx.lineWidth = 1.6
+      ctx.beginPath()
+      ctx.moveTo(8.2, -9.2)
+      ctx.bezierCurveTo(15.0, -6.2, 17.2, 0.2, 12.0, 6.2)
+      ctx.stroke()
 
       ctx.strokeStyle = 'rgba(255,255,255,.40)'
       ctx.lineWidth = 2.4
@@ -2008,7 +2727,208 @@
           }, 'rgba(80,22,26,.55)', 1.6, jx*0.8, jy*0.8, 0.7, 0.4)
           ctx.restore()
         } else {
-          if (c.alienType === 'robot'){
+          if (c.alienType === 'food'){
+            const key = c.foodKey || c.key || 'Grains'
+            const palettes = {
+              Grains: { base:'#d6b25e', mid:'#b98b3c', dark:'#7a4f1d' },
+              Proteins: { base:'#d78c7a', mid:'#b76858', dark:'#6b3a32' },
+              Proteins_medium: { base:'#d08a6a', mid:'#b26240', dark:'#6a331e' },
+              Dairy: { base:'#e9f2ff', mid:'#9ab2e8', dark:'#3a4a68' },
+              Vegetables: { base:'#66c36f', mid:'#3f8f4a', dark:'#1f5a2c' },
+              Fruits: { base:'#ff6b6b', mid:'#d83d3d', dark:'#7b2020' },
+              'Oils and Nuts': { base:'#d2a451', mid:'#b07a2f', dark:'#6a3f18' }
+            }
+            const pal = palettes[key] || palettes.Grains
+            function hexToRgbSafe(h){ return parseHex(h) || {r:220,g:180,b:94} }
+            const baseRgb = hexToRgbSafe(pal.base)
+            const midRgb = hexToRgbSafe(pal.mid)
+            const darkRgb = hexToRgbSafe(pal.dark)
+            const ink = 'rgba(60,52,44,.55)'
+            function eyes(){
+              ctx.fillStyle = 'rgba(255,255,255,.92)'
+              ctx.beginPath()
+              ctx.arc(-hr*0.30, -hr*0.05, hr*0.16, 0, Math.PI*2)
+              ctx.arc(hr*0.30, -hr*0.05, hr*0.16, 0, Math.PI*2)
+              ctx.fill()
+              ctx.fillStyle = 'rgba(22,18,14,.92)'
+              ctx.beginPath()
+              ctx.arc(-hr*0.30 + hr*0.04, -hr*0.04, hr*0.07, 0, Math.PI*2)
+              ctx.arc(hr*0.30 + hr*0.04, -hr*0.04, hr*0.07, 0, Math.PI*2)
+              ctx.fill()
+              ctx.fillStyle = 'rgba(255,255,255,.60)'
+              ctx.beginPath()
+              ctx.arc(-hr*0.30 + hr*0.02, -hr*0.08, hr*0.02, 0, Math.PI*2)
+              ctx.arc(hr*0.30 + hr*0.02, -hr*0.08, hr*0.02, 0, Math.PI*2)
+              ctx.fill()
+            }
+            ctx.save()
+            ctx.translate(c.x, headY)
+            if (key === 'Vegetables'){
+              const topG = ctx.createRadialGradient(-hr*0.35, -hr*0.55, hr*0.2, 0, -hr*0.2, hr*1.25)
+              topG.addColorStop(0, rgba(mixRgb(baseRgb, {r:255,g:255,b:255}, 0.28), 0.96))
+              topG.addColorStop(0.55, rgba(baseRgb, 0.96))
+              topG.addColorStop(1, rgba(darkRgb, 0.96))
+              ctx.fillStyle = topG
+              ctx.beginPath()
+              ctx.arc(-hr*0.55, -hr*0.30, hr*0.62, 0, Math.PI*2)
+              ctx.arc(0, -hr*0.50, hr*0.74, 0, Math.PI*2)
+              ctx.arc(hr*0.55, -hr*0.30, hr*0.62, 0, Math.PI*2)
+              ctx.closePath()
+              ctx.fill()
+              strokeTwice(() => {
+                ctx.beginPath()
+                ctx.arc(-hr*0.55, -hr*0.30, hr*0.62, 0, Math.PI*2)
+                ctx.arc(0, -hr*0.50, hr*0.74, 0, Math.PI*2)
+                ctx.arc(hr*0.55, -hr*0.30, hr*0.62, 0, Math.PI*2)
+                ctx.closePath()
+              }, ink, 2.0, jx, jy, 0.75, 0.45)
+              const stemG = ctx.createLinearGradient(0, -hr*0.05, 0, hr*1.05)
+              stemG.addColorStop(0, rgba(midRgb, 0.96))
+              stemG.addColorStop(1, rgba(darkRgb, 0.96))
+              ctx.fillStyle = stemG
+              rrPath(-hr*0.28, -hr*0.05, hr*0.56, hr*1.05, hr*0.22)
+              ctx.fill()
+              strokeTwice(() => rrPath(-hr*0.28, -hr*0.05, hr*0.56, hr*1.05, hr*0.22), ink, 1.8, jx*0.9, jy*0.9, 0.65, 0.4)
+              eyes()
+            } else if (key === 'Fruits'){
+              const g = ctx.createRadialGradient(-hr*0.35, -hr*0.55, hr*0.2, 0, 0, hr*1.25)
+              g.addColorStop(0, rgba(mixRgb(baseRgb, {r:255,g:255,b:255}, 0.22), 0.96))
+              g.addColorStop(0.55, rgba(baseRgb, 0.96))
+              g.addColorStop(1, rgba(darkRgb, 0.96))
+              ctx.fillStyle = g
+              ctx.beginPath()
+              ctx.ellipse(0, hr*0.05, hr*0.95, hr*0.98, 0, 0, Math.PI*2)
+              ctx.fill()
+              strokeTwice(() => { ctx.beginPath(); ctx.ellipse(0, hr*0.05, hr*0.95, hr*0.98, 0, 0, Math.PI*2) }, ink, 2.1, jx, jy, 0.8, 0.5)
+              ctx.fillStyle = 'rgba(60,52,44,.65)'
+              rrPath(-hr*0.08, -hr*1.02, hr*0.16, hr*0.32, hr*0.08)
+              ctx.fill()
+              const leafG = ctx.createLinearGradient(-hr*0.25, -hr*1.05, hr*0.55, -hr*0.35)
+              leafG.addColorStop(0,'rgba(120,190,112,.95)')
+              leafG.addColorStop(1,'rgba(38,120,64,.95)')
+              ctx.fillStyle = leafG
+              ctx.beginPath()
+              ctx.ellipse(hr*0.35, -hr*0.85, hr*0.55, hr*0.24, -0.6, 0, Math.PI*2)
+              ctx.fill()
+              strokeTwice(() => { ctx.beginPath(); ctx.ellipse(hr*0.35, -hr*0.85, hr*0.55, hr*0.24, -0.6, 0, Math.PI*2) }, 'rgba(60,52,44,.40)', 1.4, jx*0.8, jy*0.8, 0.65, 0.4)
+              eyes()
+            } else if (key === 'Grains'){
+              const crust = ctx.createLinearGradient(0, -hr, 0, hr)
+              crust.addColorStop(0, rgba(mixRgb(baseRgb, {r:255,g:248,b:230}, 0.18), 0.96))
+              crust.addColorStop(1, rgba(darkRgb, 0.96))
+              ctx.fillStyle = crust
+              rrPath(-hr*0.98, -hr*0.92, hr*1.96, hr*1.84, hr*0.62)
+              ctx.fill()
+              strokeTwice(() => rrPath(-hr*0.98, -hr*0.92, hr*1.96, hr*1.84, hr*0.62), ink, 2.1, jx, jy, 0.8, 0.5)
+              ctx.fillStyle = 'rgba(255,255,255,.18)'
+              rrPath(-hr*0.70, -hr*0.62, hr*1.40, hr*1.28, hr*0.48)
+              ctx.fill()
+              eyes()
+            } else if (key === 'Dairy'){
+              const paper = ctx.createLinearGradient(0, -hr, 0, hr)
+              paper.addColorStop(0, 'rgba(255,255,255,.96)')
+              paper.addColorStop(1, rgba(mixRgb(baseRgb, {r:38,g:32,b:26}, 0.10), 0.96))
+              ctx.fillStyle = paper
+              rrPath(-hr*0.85, -hr*0.95, hr*1.70, hr*1.90, hr*0.28)
+              ctx.fill()
+              strokeTwice(() => rrPath(-hr*0.85, -hr*0.95, hr*1.70, hr*1.90, hr*0.28), ink, 2.1, jx, jy, 0.8, 0.5)
+              ctx.fillStyle = rgba(midRgb, 0.92)
+              rrPath(-hr*0.65, -hr*0.10, hr*1.30, hr*0.72, hr*0.22)
+              ctx.fill()
+              strokeTwice(() => rrPath(-hr*0.65, -hr*0.10, hr*1.30, hr*0.72, hr*0.22), 'rgba(60,52,44,.38)', 1.4, jx*0.8, jy*0.8, 0.65, 0.4)
+              ctx.fillStyle = 'rgba(255,255,255,.92)'
+              ctx.beginPath()
+              ctx.moveTo(-hr*0.85, -hr*0.95)
+              ctx.lineTo(0, -hr*1.28)
+              ctx.lineTo(hr*0.85, -hr*0.95)
+              ctx.closePath()
+              ctx.fill()
+              strokeTwice(() => {
+                ctx.beginPath()
+                ctx.moveTo(-hr*0.85, -hr*0.95)
+                ctx.lineTo(0, -hr*1.28)
+                ctx.lineTo(hr*0.85, -hr*0.95)
+                ctx.closePath()
+              }, ink, 1.8, jx*0.8, jy*0.8, 0.65, 0.4)
+              eyes()
+            } else if (key === 'Proteins' || key === 'Proteins_medium'){
+              const bodyG = ctx.createRadialGradient(-hr*0.35, -hr*0.25, hr*0.2, 0, 0, hr*1.2)
+              bodyG.addColorStop(0, rgba(mixRgb(baseRgb, {r:255,g:255,b:255}, 0.22), 0.96))
+              bodyG.addColorStop(0.55, rgba(baseRgb, 0.96))
+              bodyG.addColorStop(1, rgba(darkRgb, 0.96))
+              ctx.fillStyle = bodyG
+              ctx.beginPath()
+              ctx.ellipse(-hr*0.05, 0, hr*1.00, hr*0.70, 0, 0, Math.PI*2)
+              ctx.fill()
+              strokeTwice(() => { ctx.beginPath(); ctx.ellipse(-hr*0.05, 0, hr*1.00, hr*0.70, 0, 0, Math.PI*2) }, ink, 2.0, jx, jy, 0.8, 0.5)
+              ctx.fillStyle = rgba(baseRgb, 0.96)
+              ctx.beginPath()
+              ctx.moveTo(hr*0.80, 0)
+              ctx.lineTo(hr*1.35, -hr*0.45)
+              ctx.lineTo(hr*1.35, hr*0.45)
+              ctx.closePath()
+              ctx.fill()
+              strokeTwice(() => { ctx.beginPath(); ctx.moveTo(hr*0.80, 0); ctx.lineTo(hr*1.35, -hr*0.45); ctx.lineTo(hr*1.35, hr*0.45); ctx.closePath() }, ink, 1.8, jx*0.8, jy*0.8, 0.65, 0.4)
+              ctx.fillStyle = 'rgba(255,255,255,.92)'
+              ctx.beginPath()
+              ctx.arc(-hr*0.45, -hr*0.05, hr*0.15, 0, Math.PI*2)
+              ctx.fill()
+              ctx.fillStyle = 'rgba(22,18,14,.92)'
+              ctx.beginPath()
+              ctx.arc(-hr*0.43, -hr*0.05, hr*0.07, 0, Math.PI*2)
+              ctx.fill()
+              ctx.strokeStyle = 'rgba(60,52,44,.42)'
+              ctx.lineWidth = 1.6
+              ctx.beginPath()
+              ctx.arc(-hr*0.15, hr*0.05, hr*0.24, 0.05*Math.PI, 0.95*Math.PI)
+              ctx.stroke()
+            } else {
+              const dropG = ctx.createRadialGradient(-hr*0.25, -hr*0.55, hr*0.2, 0, 0, hr*1.25)
+              dropG.addColorStop(0, rgba(mixRgb(baseRgb, {r:255,g:255,b:255}, 0.22), 0.96))
+              dropG.addColorStop(0.55, rgba(baseRgb, 0.96))
+              dropG.addColorStop(1, rgba(darkRgb, 0.96))
+              ctx.fillStyle = dropG
+              ctx.beginPath()
+              ctx.moveTo(0, -hr*1.05)
+              ctx.quadraticCurveTo(hr*0.85, -hr*0.35, hr*0.70, hr*0.40)
+              ctx.quadraticCurveTo(hr*0.55, hr*1.05, 0, hr*1.05)
+              ctx.quadraticCurveTo(-hr*0.55, hr*1.05, -hr*0.70, hr*0.40)
+              ctx.quadraticCurveTo(-hr*0.85, -hr*0.35, 0, -hr*1.05)
+              ctx.closePath()
+              ctx.fill()
+              strokeTwice(() => {
+                ctx.beginPath()
+                ctx.moveTo(0, -hr*1.05)
+                ctx.quadraticCurveTo(hr*0.85, -hr*0.35, hr*0.70, hr*0.40)
+                ctx.quadraticCurveTo(hr*0.55, hr*1.05, 0, hr*1.05)
+                ctx.quadraticCurveTo(-hr*0.55, hr*1.05, -hr*0.70, hr*0.40)
+                ctx.quadraticCurveTo(-hr*0.85, -hr*0.35, 0, -hr*1.05)
+                ctx.closePath()
+              }, ink, 2.1, jx, jy, 0.8, 0.5)
+              eyes()
+              ctx.fillStyle = 'rgba(255,255,255,.20)'
+              ctx.beginPath()
+              ctx.ellipse(-hr*0.28, -hr*0.25, hr*0.22, hr*0.42, 0.35, 0, Math.PI*2)
+              ctx.fill()
+            }
+            if (key !== 'Proteins' && key !== 'Proteins_medium'){
+              ctx.strokeStyle = 'rgba(60,52,44,.50)'
+              ctx.lineWidth = 1.7
+              ctx.beginPath()
+              ctx.arc(0, hr*0.36, hr*0.30, 0.10*Math.PI, 0.90*Math.PI)
+              ctx.stroke()
+              ctx.fillStyle = 'rgba(255,210,210,.16)'
+              ctx.beginPath()
+              ctx.arc(-hr*0.56, hr*0.22, hr*0.16, 0, Math.PI*2)
+              ctx.arc(hr*0.56, hr*0.22, hr*0.16, 0, Math.PI*2)
+              ctx.fill()
+            }
+            ctx.save()
+            ctx.globalAlpha = 0.18
+            textureLocalCircle(hr*0.92, phase*14.5 + c.x*0.017 + c.y*0.011, 'rgba(60,52,44,.16)', 'rgba(255,255,255,.14)')
+            ctx.restore()
+            ctx.restore()
+          } else if (c.alienType === 'robot'){
             const baseHex = c.alienColor || '#a0e7e5'
             const baseRgb = parseHex(baseHex) || {r:160,g:231,b:229}
             const light = mixRgb(baseRgb, {r:255,g:248,b:230}, 0.38)
@@ -2391,6 +3311,22 @@
       update(dt)
       render()
       requestAnimationFrame(loop)
+    }
+    window.runMacroSelfTest = function(){
+      const cases = [
+        { kcal: 1800, macro: { cPct: 55, pPct: 20, fPct: 25 } },
+        { kcal: 2000, macro: { cPct: 40, pPct: 30, fPct: 30 } },
+        { kcal: 2400, macro: { cPct: 50, pPct: 25, fPct: 25 } },
+      ]
+      return cases.map(({kcal, macro}) => {
+        const res = computeTargetsTaiwan(kcal, macro, 'custom')
+        const macroAbs = Math.abs(res.macros.carbsPct - macro.cPct) + Math.abs(res.macros.proteinPct - macro.pPct) + Math.abs(res.macros.fatPct - macro.fPct)
+        const kcalAbs = Math.abs(res.macros.totalKcal - Math.round(kcal))
+        return { kcal: Math.round(kcal), macroTarget: macro, kcalActual: res.macros.totalKcal, kcalAbs, macroActual: { cPct: res.macros.carbsPct, pPct: res.macros.proteinPct, fPct: res.macros.fatPct }, macroAbs, targets: res.targets }
+      })
+    }
+    if (new URLSearchParams(location.search).has('macroSelfTest')){
+      try { console.table(window.runMacroSelfTest()) } catch (e) { console.error(e) }
     }
     requestAnimationFrame(loop)
   </script>
