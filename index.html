@@ -545,10 +545,78 @@
       bottom:calc(14px + env(safe-area-inset-bottom));
       z-index:16;
       width:auto;
-      min-width:160px;
+      min-width:200px;
       flex:0 0 auto;
       pointer-events:auto;
-      box-shadow:0 18px 44px rgba(0,0,0,.55);
+      padding:14px 20px;
+      border-radius:999px;
+      font-size:15px;
+      letter-spacing:.02em;
+      position:fixed;
+      overflow:hidden;
+      box-shadow:
+        0 18px 44px rgba(0,0,0,.55),
+        0 0 0 1px rgba(255,255,255,.10) inset;
+    }
+    #homeGetStarted.btn.primary{
+      background:
+        radial-gradient(120% 140% at 20% 20%, rgba(255,255,255,.22), rgba(255,255,255,0) 52%),
+        linear-gradient(180deg, rgba(255,255,255,.10), rgba(255,255,255,0) 48%),
+        linear-gradient(180deg, var(--brand2), var(--brand));
+      box-shadow:
+        0 22px 56px rgba(0,0,0,.56),
+        0 12px 28px rgba(58,74,104,.22),
+        0 0 0 1px rgba(255,255,255,.12) inset;
+      transition: transform .12s ease, filter .2s ease, box-shadow .2s ease;
+    }
+    #homeGetStarted::before{
+      content:"";
+      position:absolute;
+      inset:-40% -60%;
+      background:
+        radial-gradient(closest-side, rgba(255,255,255,.22), rgba(255,255,255,0) 68%);
+      transform: translate3d(-12%, -10%, 0) rotate(10deg);
+      pointer-events:none;
+    }
+    #homeGetStarted:hover{
+      transform: translateY(-1px);
+      filter: brightness(1.03);
+      box-shadow:
+        0 24px 62px rgba(0,0,0,.60),
+        0 0 0 1px rgba(255,255,255,.14) inset;
+    }
+    #homeGetStarted:active{
+      transform: translateY(0);
+    }
+    #homeGetStarted:focus-visible{
+      outline:none;
+      box-shadow:
+        0 22px 56px rgba(0,0,0,.56),
+        0 0 0 3px rgba(76,125,255,.38),
+        0 0 0 1px rgba(255,255,255,.14) inset;
+    }
+    @media (max-width: 520px){
+      #homeGetStarted{ min-width:220px; padding:15px 22px; font-size:16px }
+    }
+    .field-note{
+      display:inline-flex;
+      align-items:center;
+      margin-left:8px;
+      padding:2px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      font-size:11px;
+      font-weight:900;
+      color:rgba(238,242,255,.78);
+      letter-spacing:.02em;
+    }
+    .macro-hint{
+      margin-top:6px;
+      font-size:12px;
+      font-weight:900;
+      text-align:center;
+      color:rgba(238,242,255,.72);
     }
 
     .macro-summary{
@@ -780,7 +848,7 @@
         </div>
         <div id="targetSection" class="section active">
           <div class="form-grid">
-            <label><span>Target Energy (kcal)</span><input id="kcal" type="number" min="600" placeholder="e.g. 1800"></label>
+            <label><span>Target Energy (kcal)<span class="field-note">Min 1000</span></span><input id="kcal" type="number" min="1000" placeholder="e.g. 1800"></label>
             <label><span>Protein (%)</span>
               <input id="macroProtein" type="range" min="5" max="95" step="1" value="20" style="accent-color:#556b2f">
               <span id="macroProteinLabel" class="macro-label">20%</span>
@@ -795,6 +863,7 @@
             </label>
           </div>
           <div id="macroTotal">Total: 100% (Remaining 0%)</div>
+          <div class="macro-hint">Macronutrient ratios must add up to 100%.</div>
           <div style="margin-top:8px; font-size:12px; opacity:.8">Reference: Carbohydrates 50–60%, Protein 10–20%, Fat 20–30%</div>
         </div>
         <div id="profileSection" class="section">
@@ -979,6 +1048,7 @@
     const breakdownTableEl = document.getElementById('breakdownTable')
     const macroSummaryEl = document.getElementById('macroSummary')
     const macroReviewEl = document.getElementById('macroReview')
+    const kcalInputElTop = document.getElementById('kcal')
     const proteinPowderGEl = document.getElementById('proteinPowderG')
     const proteinPowderProteinPerGEl = document.getElementById('proteinPowderProteinPerG')
     const updatePortionsBtn = document.getElementById('updatePortions')
@@ -1362,7 +1432,8 @@
         : { grains:[0, 35], proteins:[0, 16], dairy:[0, 3], veg:[0, 10], fruit:[0, 8], oils:[3, 16] })
       const strictMaxAbs = Math.max(0, isFinite(+external?._strictMaxAbs) ? (+external._strictMaxAbs) : 0.5)
       let energyTolAbsKcal = lockStrictMacro ? 60 : 40
-      let macroMaxAbsPct = lockStrictMacro ? strictMaxAbs : 0.5
+      let macroMaxAbsPct = lockStrictMacro ? strictMaxAbs : 1.0
+      const strictMacroMaxAbsPct = macroMaxAbsPct
       let minE = kcal - energyTolAbsKcal
       let maxE = kcal + energyTolAbsKcal
       function setConstraints(nextEnergyTolAbsKcal, nextMacroMaxAbsPct){
@@ -1490,6 +1561,59 @@
           Math.max(0, ref.oils[0] - s.o) + Math.max(0, s.o - ref.oils[1])
         )
       }
+      const SERVING_REF_KCALS = [1200, 1500, 1800, 2000, 2200, 2500, 2700]
+      const SERVING_REF = {
+        grains: [6, 10, 12, 12, 14, 16, 16],
+        proteins: [3, 4, 5, 6, 6, 7, 8],
+        dairy: [1.5, 1.5, 1.5, 1.5, 1.5, 1.5, 2],
+        veg: [3, 3, 3, 4, 4, 5, 5],
+        fruit: [2, 2, 2, 3, 3.5, 4, 4],
+        oils: [4, 4, 5, 6, 6, 7, 8],
+      }
+      function interpolateRef(arr, x){
+        const xs = SERVING_REF_KCALS
+        if (x <= xs[0]) return arr[0]
+        if (x >= xs[xs.length-1]) return arr[arr.length-1]
+        for (let i=0;i<xs.length-1;i++){
+          const a = xs[i], b = xs[i+1]
+          if (x >= a && x <= b){
+            const t = (x - a) / (b - a)
+            return arr[i] + (arr[i+1] - arr[i]) * t
+          }
+        }
+        return arr[arr.length-1]
+      }
+      function servingTableRef(x){
+        const k = Math.max(SERVING_REF_KCALS[0], Math.min(SERVING_REF_KCALS[SERVING_REF_KCALS.length-1], x))
+        return {
+          g: interpolateRef(SERVING_REF.grains, k),
+          p: interpolateRef(SERVING_REF.proteins, k),
+          d: interpolateRef(SERVING_REF.dairy, k),
+          v: interpolateRef(SERVING_REF.veg, k),
+          r: interpolateRef(SERVING_REF.fruit, k),
+          o: interpolateRef(SERVING_REF.oils, k),
+        }
+      }
+      function servingTableScore(s){
+        const ref = servingTableRef(kcal)
+        const dg = s.g - ref.g
+        const dp = s.p - ref.p
+        const dd = s.d - ref.d
+        const dv = s.v - ref.v
+        const dr = s.r - ref.r
+        const doil = s.o - ref.o
+        return (
+          1.00*dg*dg +
+          1.00*dp*dp +
+          0.70*dd*dd +
+          0.85*dv*dv +
+          0.85*dr*dr +
+          0.85*doil*doil
+        )
+      }
+      function servingBalanceScore(s){
+        return servingTableScore(s) + 0.35 * servingDeviation(s)
+      }
       const preferServingBalance = isMacroTargetTypical && !severeImbalance && kcal >= 1200 && kcal <= 2800
       function chooseBetter(a, b){
         if (!a) return b
@@ -1502,24 +1626,23 @@
         if (b.sse > a.sse + 1e-9) return a
         if (b.energyGap < a.energyGap - 1e-6) return b
         if (b.energyGap > a.energyGap + 1e-6) return a
-        if (preferServingBalance){
-          const aDev = servingDeviation(a)
-          const bDev = servingDeviation(b)
-          if (bDev < aDev - 1e-9) return b
-          if (bDev > aDev + 1e-9) return a
-        }
         if (bAbs.sumAbs < aAbs.sumAbs - 1e-9) return b
         if (bAbs.sumAbs > aAbs.sumAbs + 1e-9) return a
         if (bAbs.rangeAbs < aAbs.rangeAbs - 1e-9) return b
         if (bAbs.rangeAbs > aAbs.rangeAbs + 1e-9) return a
-        if (!preferServingBalance && isMacroTargetTypical){
+        if (b.exceed < a.exceed - 1e-9) return b
+        if (b.exceed > a.exceed + 1e-9) return a
+        if (preferServingBalance && aAbs.maxAbs <= 1 && bAbs.maxAbs <= 1){
+          const aDev = servingBalanceScore(a)
+          const bDev = servingBalanceScore(b)
+          if (bDev < aDev - 1e-9) return b
+          if (bDev > aDev + 1e-9) return a
+        } else if (isMacroTargetTypical){
           const aDev = servingDeviation(a)
           const bDev = servingDeviation(b)
           if (bDev < aDev - 1e-9) return b
           if (bDev > aDev + 1e-9) return a
         }
-        if (b.exceed < a.exceed - 1e-9) return b
-        if (b.exceed > a.exceed + 1e-9) return a
         return a
       }
       function estimateSequential(ranges){
@@ -1662,6 +1785,22 @@
           const sBest = refine(s, ranges)
           if (sBest) best = chooseBetter(best, sBest)
         }
+        if (preferServingBalance){
+          const ref = servingTableRef(kcal)
+          const minOil = severeImbalance
+            ? Math.max(minOilServing, ranges.oils[0])
+            : Math.max(minOilServing, (lowFatTarget ? ranges.oils[0] : Math.max(3, ranges.oils[0])))
+          const s = {
+            g: clamp(roundServing(ref.g), ranges.grains[0], ranges.grains[1]),
+            p: clamp(roundServing(ref.p), ranges.proteins[0], ranges.proteins[1]),
+            d: clamp(roundServing(ref.d), ranges.dairy[0], ranges.dairy[1]),
+            v: clamp(roundServing(ref.v), ranges.veg[0], ranges.veg[1]),
+            r: clamp(roundServing(ref.r), ranges.fruit[0], ranges.fruit[1]),
+            o: clamp(roundServing(ref.o), minOil, ranges.oils[1]),
+          }
+          const sBest = refine(s, ranges)
+          if (sBest) best = chooseBetter(best, sBest)
+        }
         for (let i = 0; i < tries; i++){
           const start = randomStart(ranges)
           const cand = refine(start, ranges)
@@ -1723,11 +1862,12 @@
         }
         return best
       }
-      function exhaustiveSearch(ranges){
+      function exhaustiveSearch(ranges, soft){
         const step = servingStep
         const toTicks = (x) => Math.round(x / step)
         const fromTicks = (t) => t * step
         let best = null
+        const validator = soft ? isValidSoft : isValid
         const minOilBase = severeImbalance
           ? Math.max(minOilServing, ranges.oils[0])
           : Math.max(minOilServing, (lowFatTarget ? ranges.oils[0] : Math.max(3, ranges.oils[0])))
@@ -1751,7 +1891,7 @@
                     const o = fromTicks(oT)
                     const s = { g,p,d,v,r,o }
                     const t = totals(g, p, d, v, r, o)
-                    if (!isValidSoft(t, s)) continue
+                    if (!validator(t, s)) continue
                     const cand = { ...s, t, sse: macroSse(t), energyGap: Math.abs(t.totalE - kcal), exceed: exceedScore(s) }
                     best = chooseBetter(best, cand)
                   }
@@ -1765,7 +1905,7 @@
       const triesScale = severeImbalance ? 6 : (lowFatTarget ? 3 : 1)
       const useExhaustive = (isMacroTargetTypical && !severeImbalance && kcal >= 1200 && kcal <= 2800)
       let best = useExhaustive
-        ? exhaustiveSearch(strictRanges)
+        ? (exhaustiveSearch(strictRanges, false) || exhaustiveSearch(strictRanges, true))
         : searchBest(strictRanges, Math.round((isMacroTargetTypical && !severeImbalance ? 160 : 40) * triesScale))
       if (!best && severeImbalance && !lockStrictMacro){
         setConstraints(100, 60)
@@ -1780,13 +1920,24 @@
         best = searchBest(fallbackRanges, Math.round((isMacroTargetTypical && !severeImbalance ? 260 : 120) * triesScale))
         if (best) adjustments.push('Relaxed serving limits to find a feasible solution')
       }
+      if (best && isMacroTargetTypical && !severeImbalance && !lockStrictMacro){
+        const abs0 = macroAbsStats(best.t)
+        if (abs0.maxAbs > strictMacroMaxAbsPct + 1e-9){
+          setConstraints(160, strictMacroMaxAbsPct)
+          adjustments.push('Prioritized macro ratio accuracy by widening energy tolerance')
+          const best2 = useExhaustive
+            ? (exhaustiveSearch(strictRanges, false) || exhaustiveSearch(strictRanges, true))
+            : (searchBest(strictRanges, Math.round(260 * triesScale)) || searchBest(relaxedRanges, Math.round(260 * triesScale)) || searchBest(fallbackRanges, Math.round(260 * triesScale)))
+          if (best2) best = chooseBetter(best, best2)
+        }
+      }
       if (!best && !lockStrictMacro){
-        setConstraints(200, 8)
-        adjustments.push('Relaxed macro and energy tolerances to find a feasible solution')
+        setConstraints(240, 3)
+        adjustments.push('Relaxed tolerances to find a feasible solution')
         best = searchBest(fallbackRanges, 80) || searchBest(relaxedRanges, 80) || searchBest(strictRanges, 80)
       }
       if (!best && !lockStrictMacro){
-        setConstraints(350, 15)
+        setConstraints(350, 6)
         adjustments.push('Further relaxed tolerances to find any feasible solution')
         best = searchBest(fallbackRanges, 120) || searchBest(relaxedRanges, 120) || searchBest(strictRanges, 120)
       }
@@ -1798,7 +1949,7 @@
         best = { g:baseGrains, p:baseProteins, d:1, v:3, r:2, o:baseOils, t, sse:Infinity, energyGap:Math.abs(t.totalE-kcal), exceed:0 }
         adjustments.push('Used heuristic fallback; tolerances may be exceeded')
       }
-      best = neighborhoodRefine(best, strictRanges, 2) || best
+      best = neighborhoodRefine(best, strictRanges, (isMacroTargetTypical && !severeImbalance ? 3 : 2)) || best
       best = neighborhoodRefine(best, relaxedRanges, 2) || best
       const tfin = best.t || totals(best.g, best.p, best.d, best.v, best.r, best.o)
       const finalAbs = macroAbsStats(tfin)
@@ -1863,6 +2014,9 @@
       macroProteinEl.addEventListener(ev, enforceMacroSum)
       macroFatEl.addEventListener(ev, enforceMacroSum)
       macroCarbEl.addEventListener(ev, enforceMacroSum)
+    })
+    ;['input','change'].forEach(ev=>{
+      kcalInputElTop && kcalInputElTop.addEventListener(ev, updateNextFromInputEnabled)
     })
     updateMacroLabels()
     modeInputs().forEach(i=> i.addEventListener('change', updateMacroLabels))
@@ -2179,7 +2333,10 @@
           ? 'Check Your Food Servings'
           : (step === 'home' ? 'Portion Based Menu Design' : 'Set Your Energy Intake & Macronutrient Ratios')
       }
-      if (step === 'input') setupSubtitleEl.textContent = 'Choose a mode to compute today’s targets'
+      if (step === 'input'){
+        setupSubtitleEl.textContent = 'Choose a mode to compute today’s targets'
+        updateNextFromInputEnabled()
+      }
       if (step === 'energy'){
         setupSubtitleEl.textContent = 'Confirm the computed energy'
         updateNextToPortionsFromEnergyEnabled()
@@ -2296,7 +2453,10 @@
         const f = Math.round(+macroFatEl.value)
         const c = Math.round(+macroCarbEl.value)
         const total = p + f + c
-        nextFromInputBtn.disabled = (total !== 100)
+        const kcalRaw = (kcalInputElTop && typeof kcalInputElTop.value === 'string') ? kcalInputElTop.value : ''
+        const kcalNum = parseLooseNumber(kcalRaw)
+        const kcalValid = (kcalRaw.trim() !== '') && isFinite(kcalNum) && kcalNum >= 1000
+        nextFromInputBtn.disabled = !(total === 100 && kcalValid)
       } else {
         nextFromInputBtn.disabled = false
       }
@@ -2601,7 +2761,11 @@
         }
         const kcalInputEl = document.getElementById('kcal')
         const overrideRaw = parseLooseNumber(kcalInputEl?.value)
-        const override = Math.max(600, isFinite(overrideRaw) ? overrideRaw : 1800)
+        if (!isFinite(overrideRaw) || overrideRaw < 1000){
+          showToast('Please enter at least 1000 kcal to continue.','error', 3200)
+          return
+        }
+        const override = overrideRaw
         if (kcalInputEl) kcalInputEl.value = String(Math.round(override))
 
         const norm2 = { pPct: mp0, fPct: mf0, cPct: mc0 }
@@ -2833,6 +2997,20 @@
       setMobileControlsVisible(false)
     })
     controlsStartBtn.addEventListener('click', () => {
+      const touch = isTouchDevice || (navigator.maxTouchPoints || 0) > 0
+      if (touch){
+        let scale = 1
+        if (window.visualViewport && typeof window.visualViewport.scale === 'number'){
+          scale = window.visualViewport.scale
+        } else {
+          const iw = window.innerWidth || document.documentElement.clientWidth
+          const sw = screen && screen.width ? screen.width : iw
+          scale = iw ? (sw / iw) : 1
+        }
+        if (Math.abs(scale - 1) > 0.06){
+          showToast('If your mobile screen is zoomed, please reset to 100% to avoid visual issues.','info', 4200)
+        }
+      }
       doStartGame()
     })
     nextBtn.addEventListener('click', () => {
