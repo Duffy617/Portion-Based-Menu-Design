@@ -1322,12 +1322,15 @@
       const autoPowderUsed = !!(external && external._autoPowderUsed)
       const isHighProteinTarget = macroTarget.pPct >= 35
       const lowFatTargetEarly = macroTarget.fPct < 20
-      const strictMacroByTarget = (macroTarget.pPct >= 25 && lowFatTargetEarly && proteinPowderProteinPerG > 0)
+      const isExtremeMacroTargetEarly = macroImbalance >= 20 || macroTarget.fPct >= 60 || macroTarget.cPct <= 15 || macroTarget.pPct >= 45
+      const strictMacroByTarget = (!isExtremeMacroTargetEarly && macroTarget.pPct >= 25 && lowFatTargetEarly && proteinPowderProteinPerG > 0)
       const shouldAutoUsePowderForMacro = isHighProteinTarget || strictMacroByTarget
       if (!autoPowderUsed && !lockStrictMacro && proteinPowderG === 0 && shouldAutoUsePowderForMacro && proteinPowderProteinPerG > 0){
-        const thresholds = [0.5, 1, 2, 5]
+        const thresholds = isExtremeMacroTargetEarly ? [2, 5, 10, 15] : [0.5, 1, 2, 5]
         const desiredProteinG = Math.max(0, (baseKcalInput * (macroTarget.pPct/100)) / 4)
-        const hiProteinG = Math.min(200, desiredProteinG)
+        const hiProteinG = isExtremeMacroTargetEarly
+          ? Math.min(500, Math.max(200, desiredProteinG))
+          : Math.min(200, desiredProteinG)
         let bestRes = null
         let bestAbs = Infinity
         for (const thr of thresholds){
@@ -1361,7 +1364,7 @@
         }
         if (bestRes) return bestRes
       }
-      const strictServingGranularity = lockStrictMacro || strictMacroByTarget
+      const strictServingGranularity = (lockStrictMacro && !isExtremeMacroTargetEarly) || strictMacroByTarget
       const servingStep = strictServingGranularity ? 0.25 : 0.5
       const roundServing = (n) => Math.round(n / servingStep) * servingStep
       const FOOD = {
