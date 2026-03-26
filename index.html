@@ -1372,6 +1372,7 @@
         fruit: { c:15, p:0, f:0, kcal:60 },
         veg: { c:5, p:1, f:0, kcal:25 },
         proteinLow: { c:0, p:7, f:3, kcal:55 },
+        proteinMid: { c:0, p:7, f:5, kcal:75 },
         oil: { c:0, p:0, f:5, kcal:45 },
         dairyLow: { c:12, p:8, f:4, kcal:120 },
       }
@@ -1449,16 +1450,33 @@
         minE = kcal - energyTolAbsKcal
         maxE = kcal + energyTolAbsKcal
       }
-      function totals(x1,x2,x3,x4,x5,x6){
-        const carbsG = x1*FOOD.grains.c + x3*FOOD.dairyLow.c + x4*FOOD.veg.c + x5*FOOD.fruit.c + powderCarbG
-        const proteinG = x1*FOOD.grains.p + x2*FOOD.proteinLow.p + x3*FOOD.dairyLow.p + x4*FOOD.veg.p + powderProteinG
-        const fatG = x2*FOOD.proteinLow.f + x3*FOOD.dairyLow.f + x6*FOOD.oil.f + powderFatG
+      function totalsWithProteinSplit(s, pmid){
+        const pTotal = s.p
+        const pMid = Math.max(0, Math.min(pTotal, pmid))
+        const pLow = pTotal - pMid
+        const carbsG = s.g*FOOD.grains.c + s.d*FOOD.dairyLow.c + s.v*FOOD.veg.c + s.r*FOOD.fruit.c + powderCarbG
+        const proteinG = s.g*FOOD.grains.p + (pLow + pMid)*FOOD.proteinLow.p + s.d*FOOD.dairyLow.p + s.v*FOOD.veg.p + powderProteinG
+        const fatG = (pLow*FOOD.proteinLow.f + pMid*FOOD.proteinMid.f) + s.d*FOOD.dairyLow.f + s.o*FOOD.oil.f + powderFatG
         const cE = carbsG*4, pE = proteinG*4, fE = fatG*9
         const totalE = cE+pE+fE
         const cPct = totalE? cE/totalE*100 : 0
         const pPct = totalE? pE/totalE*100 : 0
         const fPct = totalE? fE/totalE*100 : 0
         return { carbsG, proteinG, fatG, totalE, cPct, pPct, fPct }
+      }
+      function bestCandForServings(s, validator){
+        let best = null
+        const step = servingStep
+        const pTotal = Math.max(0, isFinite(+s.p) ? (+s.p) : 0)
+        const maxMid = roundServing(Math.max(0, pTotal))
+        for (let pmid = 0; pmid <= maxMid + 1e-9; pmid += step){
+          const pm = roundServing(pmid)
+          const t = totalsWithProteinSplit(s, pm)
+          if (!validator(t, s)) continue
+          const cand = { ...s, pmid: pm, t, sse: macroSse(t), energyGap: Math.abs(t.totalE - kcal), exceed: exceedScore(s) }
+          best = chooseBetter(best, cand)
+        }
+        return best
       }
       let adjustments = []
       let carbTargetG = 0
@@ -1697,11 +1715,7 @@
           const o = roundServing(clamp(s.o, minOil, ranges.oils[1]))
           return { g,p,d,v,r,o }
         }
-        let best = null
-        const startT = totals(start.g, start.p, start.d, start.v, start.r, start.o)
-        if (isValid(startT, start)){
-          best = { ...start, t: startT, sse: macroSse(startT), energyGap: Math.abs(startT.totalE - kcal), exceed: exceedScore(start) }
-        }
+        let best = bestCandForServings(start, isValid)
         const vars = ['o', 'p', 'g', 'r', 'v', 'd']
         const deltas = (severeImbalance ? [ -8, -4, -2, -1, 1, 2, 4, 8 ] : [ -2, -1, 1, 2 ]).map(x => x * step)
         const pairDeltas = (severeImbalance ? [ -4, -2, -1, 1, 2, 4 ] : [ -2, -1, 1, 2 ]).map(x => x * step)
@@ -1712,9 +1726,8 @@
           for (const k of vars){
             for (const dv of deltas){
               const next = mk({ ...base, [k]: base[k] + dv })
-              const t = totals(next.g, next.p, next.d, next.v, next.r, next.o)
-              if (!isValid(t, next)) continue
-              const cand = { ...next, t, sse: macroSse(t), energyGap: Math.abs(t.totalE - kcal), exceed: exceedScore(next) }
+              const cand = bestCandForServings(next, isValid)
+              if (!cand) continue
               candidateBest = chooseBetter(candidateBest, cand)
             }
           }
@@ -1724,9 +1737,8 @@
               const b = vars[j]
               for (const dv of pairDeltas){
                 const next = mk({ ...base, [a]: base[a] + dv, [b]: base[b] - dv })
-                const t = totals(next.g, next.p, next.d, next.v, next.r, next.o)
-                if (!isValid(t, next)) continue
-                const cand = { ...next, t, sse: macroSse(t), energyGap: Math.abs(t.totalE - kcal), exceed: exceedScore(next) }
+                const cand = bestCandForServings(next, isValid)
+                if (!cand) continue
                 candidateBest = chooseBetter(candidateBest, cand)
               }
             }
@@ -1857,9 +1869,8 @@
                     const tr = clampR(bt.r + dr, lo.r, hi.r)
                     const to = clampR(bt.o + doil, lo.o, hi.o)
                     const s = { g:fromTicks(tg), p:fromTicks(tp), d:fromTicks(td), v:fromTicks(tv), r:fromTicks(tr), o:fromTicks(to) }
-                    const t = totals(s.g, s.p, s.d, s.v, s.r, s.o)
-                    if (!isValid(t, s)) continue
-                    const cand = { ...s, t, sse: macroSse(t), energyGap: Math.abs(t.totalE - kcal), exceed: exceedScore(s) }
+                    const cand = bestCandForServings(s, isValid)
+                    if (!cand) continue
                     best = chooseBetter(best, cand)
                   }
                 }
@@ -1897,9 +1908,8 @@
                   for (let oT = oLo; oT <= oHi; oT++){
                     const o = fromTicks(oT)
                     const s = { g,p,d,v,r,o }
-                    const t = totals(g, p, d, v, r, o)
-                    if (!validator(t, s)) continue
-                    const cand = { ...s, t, sse: macroSse(t), energyGap: Math.abs(t.totalE - kcal), exceed: exceedScore(s) }
+                    const cand = bestCandForServings(s, validator)
+                    if (!cand) continue
                     best = chooseBetter(best, cand)
                   }
                 }
@@ -1965,24 +1975,33 @@
         const baseGrains = roundServing(Math.max(0, (carbTargetG - 1*FOOD.dairyLow.c - 3*FOOD.veg.c - 2*FOOD.fruit.c) / FOOD.grains.c))
         const baseProteins = roundServing(Math.max(0, (proteinTargetG - 1*FOOD.dairyLow.p - 3*FOOD.veg.p - baseGrains*FOOD.grains.p) / FOOD.proteinLow.p))
         const baseOils = roundServing(Math.max(severeImbalance ? 0 : 3, (fatTargetG - 1*FOOD.dairyLow.f - baseProteins*FOOD.proteinLow.f) / FOOD.oil.f))
-        const t = totals(baseGrains, baseProteins, 1, 3, 2, baseOils)
-        best = { g:baseGrains, p:baseProteins, d:1, v:3, r:2, o:baseOils, t, sse:Infinity, energyGap:Math.abs(t.totalE-kcal), exceed:0 }
+        const s = { g:baseGrains, p:baseProteins, d:1, v:3, r:2, o:baseOils }
+        const cand = bestCandForServings(s, isValidSoft)
+        if (cand){
+          best = cand
+        } else {
+          const t = totalsWithProteinSplit(s, 0)
+          best = { ...s, pmid:0, t, sse:Infinity, energyGap:Math.abs(t.totalE-kcal), exceed:0 }
+        }
         adjustments.push('Used heuristic fallback; tolerances may be exceeded')
       }
       best = neighborhoodRefine(best, strictRanges, (strictMacroByTarget && !severeImbalance ? 4 : (isMacroTargetTypical && !severeImbalance ? 3 : 2))) || best
       best = neighborhoodRefine(best, relaxedRanges, 2) || best
-      const tfin = best.t || totals(best.g, best.p, best.d, best.v, best.r, best.o)
+      const tfin = best.t
       const finalAbs = macroAbsStats(tfin)
       const finalEnergyGap = Math.abs(tfin.totalE - kcal)
       if (finalAbs.maxAbs > 2 + 1e-9 || finalEnergyGap > 100 + 1e-6){
         adjustments.push(`Closest achievable with this food model; macro max diff ${Math.round(finalAbs.maxAbs*10)/10}%, kcal diff ${Math.round(finalEnergyGap)}`)
       }
       const rr = v => roundServing(v)
+      const finalProteinMid = rr(Math.max(0, Math.min(best.p, best.pmid || 0)))
+      const finalProteinLow = rr(Math.max(0, best.p - finalProteinMid))
       return {
         kcal,
         targets: {
           'Grains': rr(best.g),
-          'Proteins': rr(best.p),
+          'Proteins': finalProteinLow,
+          'Proteins_medium': finalProteinMid,
           'Dairy': rr(best.d),
           'Vegetables': rr(best.v),
           'Fruits': rr(best.r),
@@ -2000,7 +2019,7 @@
         adjustments,
         assumptions: {
           dairyType: 'low-fat',
-          proteinType: 'low-fat',
+          proteinType: finalProteinMid > 0 ? 'mixed' : 'low-fat',
           proteinPowderG: Math.round(proteinPowderG),
           proteinPowderProteinPerG,
           baseKcal: Math.round(baseKcalInput),
@@ -2337,6 +2356,12 @@
       setMobileControlsVisible(false)
     })
     const pending = { mode: 'target', kcal: 0, targets: null, energyLabel: 'Target Energy', formulaText: '' }
+    function cloneData(x){
+      try{
+        if (typeof structuredClone === 'function') return structuredClone(x)
+      } catch {}
+      return JSON.parse(JSON.stringify(x))
+    }
     function formatKcal(label, kcal){
       if (label === 'Estimated Energy') return (+kcal).toFixed(1)
       return String(Math.round(+kcal))
@@ -2426,12 +2451,17 @@
     function getManualTargets(){
       const out = {}
       const inputs = manualPortionReviewEl.querySelectorAll('.manual-serving')
+      let step = 0.5
+      for (const el of inputs){
+        if (String(el.step) === '0.25'){ step = 0.25; break }
+      }
+      const roundToStep = (n) => Math.round(n / step) * step
       for (const el of inputs){
         const key = el.getAttribute('data-key')
         let v = parseFloat(el.value)
         if (!isFinite(v)) v = 0
         v = Math.max(0, v)
-        out[key] = halfRound(v)
+        out[key] = roundToStep(v)
       }
       return out
     }
@@ -2521,6 +2551,12 @@
       const proteinPowderProteinPerG = isFinite(+result?.assumptions?.proteinPowderProteinPerG)
         ? (+result.assumptions.proteinPowderProteinPerG)
         : (isFinite(+pending?.proteinPowderProteinPerG) ? (+pending.proteinPowderProteinPerG) : 0.8)
+      const hasQuarterStep = Object.values(targets).some(v => {
+        const x = +v
+        if (!isFinite(x)) return false
+        return Math.abs(x*4 - Math.round(x*4)) < 1e-9 && Math.abs(x*2 - Math.round(x*2)) > 1e-9
+      })
+      const manualServingStep = hasQuarterStep ? 0.25 : 0.5
       if (editable){
         html.push(`<label><span>Protein powder (g/day)</span><input class="protein-powder" type="number" min="0" step="1" value="${Math.max(0, Math.round(proteinPowderG))}"></label>`)
         const perGText = (pending?.proteinPowderProteinPerGText != null && String(pending.proteinPowderProteinPerGText).trim() !== '')
@@ -2531,14 +2567,14 @@
       for (const n of FOOD_GROUPS){
         const tar = targets[n.key] ?? 0
         if (editable){
-          html.push(`<label><span>${n.label} (servings)</span><input class="manual-serving" data-key="${n.key}" type="number" min="0" step="0.5" value="${tar}"></label>`)
+          html.push(`<label><span>${n.label} (servings)</span><input class="manual-serving" data-key="${n.key}" type="number" min="0" step="${manualServingStep}" value="${tar}"></label>`)
         } else {
           html.push(`<label><span>${n.label} (servings)</span><input value="${tar}" readonly></label>`)
         }
         if (n.key === 'Proteins'){
           const tarMid = targets['Proteins_medium'] ?? 0
           if (editable){
-            html.push(`<label><span>Beans, Fish, Eggs, and Meat（medium-fat） (servings)</span><input class="manual-serving" data-key="Proteins_medium" type="number" min="0" step="0.5" value="${tarMid}"></label>`)
+            html.push(`<label><span>Beans, Fish, Eggs, and Meat（medium-fat） (servings)</span><input class="manual-serving" data-key="Proteins_medium" type="number" min="0" step="${manualServingStep}" value="${tarMid}"></label>`)
           } else {
             html.push(`<label><span>Beans, Fish, Eggs, and Meat（medium-fat） (servings)</span><input value="${tarMid}" readonly></label>`)
           }
@@ -2795,7 +2831,7 @@
         try{
           pending.result = targetsForEnergy(pending.kcal, pending.macroTarget, 'custom', { proteinPowderG: pending.proteinPowderG || 0, proteinPowderProteinPerG: pending.proteinPowderProteinPerG })
           syncAutoProteinPowderToPending(pending.result)
-          pending.targets = { ...pending.result.targets, Proteins_medium: 0 }
+          pending.targets = { ...pending.result.targets, Proteins_medium: (pending.result?.targets?.Proteins_medium ?? 0) }
           portionEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.result?.kcal ?? pending.kcal)} kcal`
           renderPortionReview(pending.result)
           showStep('portions')
@@ -2862,7 +2898,7 @@
       try{
         pending.result = targetsForEnergy(pending.kcal, macroTarget, macroMode, { proteinPowderG: pending.proteinPowderG || 0, proteinPowderProteinPerG: pending.proteinPowderProteinPerG })
         syncAutoProteinPowderToPending(pending.result)
-        pending.targets = { ...pending.result.targets, Proteins_medium: 0 }
+        pending.targets = { ...pending.result.targets, Proteins_medium: (pending.result?.targets?.Proteins_medium ?? 0) }
         portionEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.result?.kcal ?? pending.kcal)} kcal`
         renderPortionReview(pending.result)
         showStep('portions')
@@ -2931,6 +2967,13 @@
 
     adjustPortionsManuallyBtn && adjustPortionsManuallyBtn.addEventListener('click', () => {
       syncProteinPowderFromUI()
+      pending._portionsSnapshot = cloneData({
+        result: pending.result,
+        targets: pending.targets,
+        proteinPowderG: pending.proteinPowderG,
+        proteinPowderProteinPerG: pending.proteinPowderProteinPerG,
+        proteinPowderProteinPerGText: pending.proteinPowderProteinPerGText,
+      })
       const targets = pending.targets || pending.result?.targets || targetsForEnergy(pending.kcal, pending.macroTarget, pending.macroMode, { proteinPowderG: pending.proteinPowderG || 0, proteinPowderProteinPerG: pending.proteinPowderProteinPerG }).targets
       renderManualReview(targets)
       showStep('manual')
@@ -2953,7 +2996,7 @@
       const mt = pending.macroTarget || { cPct: 55, pPct: 20, fPct: 25 }
       const ms = pending.macroMode || 'auto'
       pending.result = targetsForEnergy(kcalBase, mt, ms, { proteinPowderG: v, proteinPowderProteinPerG: perG })
-      pending.targets = { ...pending.result.targets, Proteins_medium: 0 }
+      pending.targets = { ...pending.result.targets, Proteins_medium: (pending.result?.targets?.Proteins_medium ?? 0) }
       renderPortionReview(pending.result)
     })
 
@@ -2979,7 +3022,17 @@
     })
 
     manualBackBtn && manualBackBtn.addEventListener('click', () => {
-      pending.result && renderPortionReview(pending.result)
+      const snap = pending._portionsSnapshot
+      if (snap && snap.result){
+        pending.result = snap.result
+        pending.targets = snap.targets
+        pending.proteinPowderG = snap.proteinPowderG
+        pending.proteinPowderProteinPerG = snap.proteinPowderProteinPerG
+        pending.proteinPowderProteinPerGText = snap.proteinPowderProteinPerGText
+        renderPortionReview(pending.result)
+      } else {
+        pending.result && renderPortionReview(pending.result)
+      }
       showStep('portions')
     })
     function doStartGame(){
