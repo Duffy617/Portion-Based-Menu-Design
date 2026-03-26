@@ -110,8 +110,7 @@
     #miniTargets .mt{ display:inline-flex; align-items:center; gap:3px }
     #miniTargets .lbl{ opacity:.85; letter-spacing:.02em }
     #miniTargets .num{ font-variant-numeric:tabular-nums }
-    #miniTargets .num.full{ color: rgba(170, 96, 96, .95) }
-    #miniTargets .num.exceed{ color: rgba(255,77,79,.92) }
+    #miniTargets .num.zero{ color: rgba(255,77,79,.92) }
     button.badge{ font:inherit; color:inherit }
     #targetsToggle{ display:none }
     .hint{ color:var(--muted); font-weight:900 }
@@ -2088,16 +2087,17 @@
       const curV = (cm['Vegetables']||0), tarV = (tg['Vegetables']||0)
       const curF = (cm['Fruits']||0), tarF = (tg['Fruits']||0)
       const curO = (cm['Oils and Nuts']||0), tarO = (tg['Oils and Nuts']||0)
-      const full = (cur, tar) => (tar > 0 && cur >= tar - 1e-9)
-      const exceed = (cur, tar) => (tar > 0 && cur > tar + 1e-9)
-      const cls = (cur, tar) => exceed(cur, tar) ? ' exceed' : (full(cur, tar) ? ' full' : '')
+      const remainCls = (cur, tar) => {
+        const remain = Math.max(0, (tar||0) - (cur||0))
+        return (tar > 0 && Math.abs(remain) <= 1e-9) ? ' zero' : ''
+      }
       const parts = [
-        `<span class="mt"><span class="lbl">G</span><span class="num${cls(curG,tarG)}">${formatHalf(curG)}/${formatHalf(tarG)}</span></span>`,
-        `<span class="mt"><span class="lbl">P</span><span class="num${cls(curP,tarP)}">${formatHalf(curP)}/${formatHalf(tarP)}</span></span>`,
-        `<span class="mt"><span class="lbl">D</span><span class="num${cls(curD,tarD)}">${formatHalf(curD)}/${formatHalf(tarD)}</span></span>`,
-        `<span class="mt"><span class="lbl">V</span><span class="num${cls(curV,tarV)}">${formatHalf(curV)}/${formatHalf(tarV)}</span></span>`,
-        `<span class="mt"><span class="lbl">F</span><span class="num${cls(curF,tarF)}">${formatHalf(curF)}/${formatHalf(tarF)}</span></span>`,
-        `<span class="mt"><span class="lbl">O</span><span class="num${cls(curO,tarO)}">${formatHalf(curO)}/${formatHalf(tarO)}</span></span>`
+        `<span class="mt"><span class="lbl">G</span><span class="num${remainCls(curG,tarG)}">${formatHalf(curG)}/${formatHalf(tarG)}</span></span>`,
+        `<span class="mt"><span class="lbl">P</span><span class="num${remainCls(curP,tarP)}">${formatHalf(curP)}/${formatHalf(tarP)}</span></span>`,
+        `<span class="mt"><span class="lbl">D</span><span class="num${remainCls(curD,tarD)}">${formatHalf(curD)}/${formatHalf(tarD)}</span></span>`,
+        `<span class="mt"><span class="lbl">V</span><span class="num${remainCls(curV,tarV)}">${formatHalf(curV)}/${formatHalf(tarV)}</span></span>`,
+        `<span class="mt"><span class="lbl">F</span><span class="num${remainCls(curF,tarF)}">${formatHalf(curF)}/${formatHalf(tarF)}</span></span>`,
+        `<span class="mt"><span class="lbl">O</span><span class="num${remainCls(curO,tarO)}">${formatHalf(curO)}/${formatHalf(tarO)}</span></span>`
       ]
       el.innerHTML = parts.join(' ')
     }
@@ -2171,7 +2171,10 @@
           : (step === 'home' ? 'Portion Based Menu Design' : 'Set Your Energy Intake & Macronutrient Ratios')
       }
       if (step === 'input') setupSubtitleEl.textContent = 'Choose a mode to compute today’s targets'
-      if (step === 'energy') setupSubtitleEl.textContent = 'Confirm the computed energy'
+      if (step === 'energy'){
+        setupSubtitleEl.textContent = 'Confirm the computed energy'
+        updateNextToPortionsFromEnergyEnabled()
+      }
       if (step === 'portions') setupSubtitleEl.textContent = 'Confirm today’s portion targets'
     }
 
@@ -2279,15 +2282,15 @@
     function updateNextFromInputEnabled(){
       if (!nextFromInputBtn) return
       const mode = modeInputs().find(i=>i.checked)?.value || 'target'
-      if (mode !== 'target'){
-        nextFromInputBtn.disabled = true
-        return
+      if (mode === 'target'){
+        const p = Math.round(+macroProteinEl.value)
+        const f = Math.round(+macroFatEl.value)
+        const c = Math.round(+macroCarbEl.value)
+        const total = p + f + c
+        nextFromInputBtn.disabled = (total !== 100)
+      } else {
+        nextFromInputBtn.disabled = false
       }
-      const p = Math.round(+macroProteinEl.value)
-      const f = Math.round(+macroFatEl.value)
-      const c = Math.round(+macroCarbEl.value)
-      const total = p + f + c
-      nextFromInputBtn.disabled = (total !== 100)
     }
     function updateNextToPortionsFromEnergyEnabled(){
       if (!nextToPortionsFromEnergyBtn) return
@@ -2556,13 +2559,6 @@
     stressEl.addEventListener('change', updateStressUI)
     updateStressUI()
     function handleNextFromInput(){
-      const mp0 = Math.round(+macroProteinEl.value)
-      const mf0 = Math.round(+macroFatEl.value)
-      const mc0 = Math.round(+macroCarbEl.value)
-      if ((mp0 + mf0 + mc0) !== 100){
-        showToast('三大營養素比例總和必須是 100% 才能繼續','error', 3500)
-        return
-      }
       const age = +ageEl.value
       const sex = sexEl.value
       const height = +heightEl.value
@@ -2587,6 +2583,13 @@
       const mode = modeInputs().find(i=>i.checked)?.value || 'target'
       pending.mode = mode
       if (mode === 'target'){
+        const mp0 = Math.round(+macroProteinEl.value)
+        const mf0 = Math.round(+macroFatEl.value)
+        const mc0 = Math.round(+macroCarbEl.value)
+        if ((mp0 + mf0 + mc0) !== 100){
+          showToast('三大營養素比例總和必須是 100% 才能繼續','error', 3500)
+          return
+        }
         const kcalInputEl = document.getElementById('kcal')
         const overrideRaw = parseLooseNumber(kcalInputEl?.value)
         const override = Math.max(600, isFinite(overrideRaw) ? overrideRaw : 1800)
