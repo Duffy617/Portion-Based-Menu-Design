@@ -95,6 +95,11 @@
     button.badge{ font:inherit; color:inherit }
     #targetsToggle{ display:none }
     .hint{ color:var(--muted); font-weight:900 }
+    #lives.life-warning{
+      border-color:rgba(255,77,79,.80);
+      box-shadow:0 0 0 2px rgba(255,77,79,.18) inset, 0 18px 44px rgba(0,0,0,.22);
+      background:linear-gradient(180deg, rgba(28,30,36,.86), rgba(20,20,26,.82));
+    }
     #targets{
       position:relative;
       display:grid;
@@ -123,6 +128,11 @@
       min-width:0;
     }
     .chip.exceeded{ border-color:rgba(255,77,79,.55); box-shadow:0 0 0 1px rgba(255,77,79,.18) inset }
+    .chip.warning{
+      border-color:rgba(255,77,79,.70);
+      background:linear-gradient(180deg, rgba(28,30,36,.86), rgba(20,20,26,.82));
+      box-shadow:0 0 0 2px rgba(255,77,79,.20) inset;
+    }
     .chip .label{ grid-column:1; grid-row:1; font-size:12px; font-weight:900; color:var(--chip-color,#6b86c4); letter-spacing:.02em; text-transform:uppercase }
     .chip .val{ grid-column:2; grid-row:1; font-size:13px; font-weight:900; justify-self:end }
     .chip .bar{ grid-column:1 / -1; grid-row:2; height:6px; background:rgba(255,255,255,.08); border-radius:999px; overflow:hidden; border:1px solid rgba(255,255,255,.12) }
@@ -660,6 +670,17 @@
       .btn-row{ flex-direction:column }
       #overlay .btn{ width:100% }
     }
+    @media (max-width: 520px) and (orientation: portrait){
+      #topbar{ flex-direction:column; align-items:stretch }
+      #mobileControls{
+        justify-content:space-between;
+        padding:10px calc(14px + env(safe-area-inset-right)) calc(10px + env(safe-area-inset-bottom)) calc(14px + env(safe-area-inset-left));
+      }
+      #mobileControls .touch-btn{
+        width:66px;
+        height:66px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -964,6 +985,18 @@
     const macroCarbProfileLabelEl = document.getElementById('macroCarbProfileLabel')
     const macroTotalProfileEl = document.getElementById('macroTotalProfile')
     let W = 0, H = 0
+    let PLAY_BOTTOM = 0
+    function computePlayBottom(){
+      const touchDevice = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || (navigator.maxTouchPoints || 0) > 0
+      const isPortrait = H > W
+      const mcVisible = !!(mobileControlsEl && mobileControlsEl.style.display !== 'none')
+      if (touchDevice && isPortrait && mcVisible && mobileControlsEl){
+        const r = mobileControlsEl.getBoundingClientRect()
+        const inset = Math.max(0, Math.round(r.height)) + 8
+        return Math.max(0, H - inset)
+      }
+      return H
+    }
     function resize() {
       const dpr = Math.max(1, window.devicePixelRatio || 1)
       const vv = window.visualViewport
@@ -977,6 +1010,7 @@
       canvas.height = Math.floor(h * dpr)
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0)
       W = w; H = h
+      PLAY_BOTTOM = computePlayBottom()
     }
     resize()
     window.addEventListener('resize', resize)
@@ -1033,6 +1067,27 @@
         })
       }
     }
+    function carrotPowerEffect(x,y){
+      const cols = [
+        'rgba(255,210,210,.95)',
+        'rgba(255,244,163,.95)',
+        'rgba(140,182,92,.95)',
+        'rgba(255,150,90,.95)',
+        'rgba(255,248,230,.95)'
+      ]
+      for (let k=0;k<54;k++){
+        const col = cols[Math.floor(Math.random()*cols.length)]
+        state.particles.push({
+          x, y,
+          vx: rand(-300,300),
+          vy: rand(-340,90),
+          life: rand(0.55,1.15),
+          r: rand(1.6,4.6),
+          color: col,
+          shape: (Math.random()<0.35) ? 'star' : 'dot'
+        })
+      }
+    }
     let prevSpace = false
     const PANEL_TEXT_COLOR = (getComputedStyle(document.documentElement).getPropertyValue('--text') || '#eef2ff').trim()
     const FOOD_GROUPS = [
@@ -1079,6 +1134,7 @@
       return BEE * activity * stress
     }
     function computeTargetsTaiwan(kcal, macroOverride, macroSource, external){
+      const baseKcalInput = Math.max(0, isFinite(+kcal) ? +kcal : 0)
       const macroTarget = macroOverride && isFinite(macroOverride.cPct) && isFinite(macroOverride.pPct) && isFinite(macroOverride.fPct)
         ? macroOverride
         : { cPct: 55, pPct: 20, fPct: 25 }
@@ -1087,6 +1143,18 @@
       const powderProteinG = proteinPowderG * proteinPowderProteinPerG
       const powderCarbG = 0
       const powderFatG = 0
+      const powderKcal = powderProteinG * 4 + powderCarbG * 4 + powderFatG * 9
+      const basePlusPowderKcal = baseKcalInput + powderKcal
+      let plannedKcal = basePlusPowderKcal
+      const minKcalForPowder = Math.max(
+        (macroTarget.cPct > 0.001) ? ((powderCarbG * 4) / (macroTarget.cPct / 100)) : 0,
+        (macroTarget.pPct > 0.001) ? ((powderProteinG * 4) / (macroTarget.pPct / 100)) : 0,
+        (macroTarget.fPct > 0.001) ? ((powderFatG * 9) / (macroTarget.fPct / 100)) : 0
+      )
+      if (isFinite(minKcalForPowder) && minKcalForPowder > plannedKcal + 1e-6){
+        plannedKcal = Math.ceil(minKcalForPowder / 5) * 5
+      }
+      kcal = plannedKcal
       const isMacroTargetTypical = macroTarget.cPct >= 45 && macroTarget.cPct <= 65
         && macroTarget.pPct >= 5 && macroTarget.pPct <= 25
         && macroTarget.fPct >= 15 && macroTarget.fPct <= 35
@@ -1189,6 +1257,10 @@
       let adjustments = []
       if (proteinPowderG > 0){
         adjustments.push(`Included protein powder: ${Math.round(proteinPowderG)} g/day`)
+        adjustments.push(`Target energy: ${Math.round(baseKcalInput)} + ${Math.round(powderKcal)} = ${Math.round(basePlusPowderKcal)} kcal`)
+        if (kcal > basePlusPowderKcal + 1e-6){
+          adjustments.push(`Target energy increased to ${Math.round(kcal)} kcal to satisfy macro ratio with protein powder`)
+        }
       }
       function clamp(x, lo, hi){ return Math.max(lo, Math.min(hi, x)) }
       function macroSse(t){
@@ -1572,6 +1644,7 @@
           proteinType: 'low-fat',
           proteinPowderG: Math.round(proteinPowderG),
           proteinPowderProteinPerG: Math.round(proteinPowderProteinPerG * 100) / 100,
+          baseKcal: Math.round(baseKcalInput),
           macroTarget,
           macroSource: macroSource || 'auto',
         }
@@ -1645,6 +1718,8 @@
       level: 1,
       time: 0,
       player: { x: W*0.5, y: H*0.8, r: 16, s: 280, fireCd: 0, fireRate: 0.12, hitCd: 0, face: 1, lean: 0, shakeT: 0, shakeD: 0.18, shakeAmp: 6, moving: false },
+      doubleShotsLeft: 0,
+      doubleGlowT: 0,
       bullets: [],
       circles: [],
       particles: [],
@@ -1664,6 +1739,7 @@
     function setMobileControlsVisible(on){
       if (!mobileControlsEl) return
       mobileControlsEl.style.display = on ? 'flex' : 'none'
+      PLAY_BOTTOM = computePlayBottom()
     }
     function updateControlsHint(){
       if (!controlsHintEl) return
@@ -1732,11 +1808,17 @@
         shootTouchBtn.addEventListener('pointerleave', stopShoot)
       }
     }
+    function updateLivesUI(){
+      if (!livesEl) return
+      livesEl.textContent = 'Lives ' + state.lives
+      livesEl.classList.toggle('life-warning', state.lives <= 1)
+    }
     function reset(){
       state.running = true
       state.time = 0
       state.player.x = W*0.5
-      state.player.y = H*0.8
+      const bottom = PLAY_BOTTOM || H
+      state.player.y = Math.min(H*0.8, bottom*0.82)
       state.player.hitCd = 0
       state.player.face = 1
       state.player.lean = 0
@@ -1781,7 +1863,7 @@
       overlay.style.display = 'none'
       nextBtn.style.display = 'none'
       state.player.r = 16
-      livesEl.textContent = 'Lives ' + state.lives
+      updateLivesUI()
       setMobileControlsVisible(isTouchDevice)
       updateGameEnergyUI()
     }
@@ -1960,7 +2042,7 @@
       }
       pending.result = result
       pending.targets = targets
-      manualEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.kcal)} kcal`
+      manualEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.result?.kcal ?? pending.kcal)} kcal`
       renderPortionReview(result)
       renderPortionReviewInto(result, manualPortionReviewEl, manualBreakdownTableEl, manualMacroReviewEl, manualMacroSummaryEl, true)
     }
@@ -2248,7 +2330,7 @@
         pending.macroTarget = { cPct: norm.cPct, pPct: norm.pPct, fPct: norm.fPct }
         pending.result = targetsForEnergy(pending.kcal, pending.macroTarget, 'custom', { proteinPowderG: pending.proteinPowderG || 0, proteinPowderProteinPerG: pending.proteinPowderProteinPerG })
         pending.targets = { ...pending.result.targets, Proteins_medium: 0 }
-        portionEnergyValueEl.textContent = `${pending.energyLabel}: ${pending.kcal} kcal`
+        portionEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.result?.kcal ?? pending.kcal)} kcal`
         renderPortionReview(pending.result)
         showStep('portions')
         return
@@ -2289,7 +2371,7 @@
       pending.macroMode = macroMode
       pending.result = targetsForEnergy(pending.kcal, macroTarget, macroMode, { proteinPowderG: pending.proteinPowderG || 0, proteinPowderProteinPerG: pending.proteinPowderProteinPerG })
       pending.targets = { ...pending.result.targets, Proteins_medium: 0 }
-      portionEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.kcal)} kcal`
+      portionEnergyValueEl.textContent = `${pending.energyLabel}: ${formatKcal(pending.energyLabel, pending.result?.kcal ?? pending.kcal)} kcal`
       renderPortionReview(pending.result)
       showStep('portions')
     })
@@ -2427,15 +2509,28 @@
           const x = rand(w/2 + 40, W - w/2 - 40)
           ctx.restore()
           const specialRoll = Math.random()
-          if (specialRoll < 0.06){
+          if (specialRoll < 0.05){
             const c = {
               x, y, w, h,
               vx: rand(-60,60), vy: speed,
               kind: 'powerup',
               label: 'EXTRA LIFE',
+              powerType: 'life',
               phase: rand(0, Math.PI*2), swayAmp: rand(12,28),
               headR: 12,
               powerColor: '#b91c1c'
+            }
+            state.circles.push(c)
+          } else if (specialRoll < 0.09){
+            const c = {
+              x, y, w, h,
+              vx: rand(-60,60), vy: speed,
+              kind: 'powerup',
+              label: 'CARROT',
+              powerType: 'double',
+              phase: rand(0, Math.PI*2), swayAmp: rand(12,28),
+              headR: 12,
+              powerColor: '#d97706'
             }
             state.circles.push(c)
           } else {
@@ -2457,8 +2552,30 @@
     }
     function shoot(){
       if (state.player.fireCd > 0) return
-      const b = { x: state.player.x, y: state.player.y - state.player.r, r: 6, vx: 0, vy: -420 }
-      state.bullets.push(b)
+      const y = state.player.y - state.player.r
+      if (state.doubleShotsLeft > 0){
+        const spread = 10
+        const b1 = { x: state.player.x - spread, y, r: 6, vx: -40, vy: -420 }
+        const b2 = { x: state.player.x + spread, y, r: 6, vx: 40, vy: -420 }
+        state.bullets.push(b1, b2)
+        state.doubleShotsLeft = Math.max(0, state.doubleShotsLeft - 1)
+        state.doubleGlowT = Math.max(state.doubleGlowT, 0.6)
+        for (let k=0;k<10;k++){
+          state.particles.push({
+            x: state.player.x + rand(-10,10),
+            y: y + rand(-6,6),
+            vx: rand(-180,180),
+            vy: rand(-280,-80),
+            life: rand(0.22,0.55),
+            r: rand(1.4,3.2),
+            color: (Math.random()<0.5) ? 'rgba(255,210,210,.95)' : 'rgba(255,244,163,.95)',
+            shape: (Math.random()<0.55) ? 'star' : 'dot'
+          })
+        }
+      } else {
+        const b = { x: state.player.x, y, r: 6, vx: 0, vy: -420 }
+        state.bullets.push(b)
+      }
       state.player.fireCd = state.player.fireRate
     }
     function update(dt){
@@ -2491,7 +2608,7 @@
       p.x += (mx/len) * p.s * dt
       p.y += (my/len) * p.s * dt
       p.x = clamp(p.x, p.r, W-p.r)
-      p.y = clamp(p.y, p.r, H-p.r)
+      p.y = clamp(p.y, p.r, (PLAY_BOTTOM || H) - p.r)
       if (keys['Space'] && !prevSpace) shoot()
       prevSpace = !!keys['Space']
       if (state.touch.shooting) shoot()
@@ -2499,6 +2616,19 @@
       if (p.fireCd > 0) p.fireCd = Math.max(0, p.fireCd - dt)
       if (p.hitCd > 0) p.hitCd = Math.max(0, p.hitCd - dt)
       if (p.shakeT > 0) p.shakeT = Math.max(0, p.shakeT - dt)
+      if (state.doubleGlowT > 0) state.doubleGlowT = Math.max(0, state.doubleGlowT - dt)
+      if (state.doubleShotsLeft > 0 && Math.random() < 0.14){
+        state.particles.push({
+          x: p.x + rand(-16,16),
+          y: p.y + rand(-18,10),
+          vx: rand(-40,40),
+          vy: rand(-70,-10),
+          life: rand(0.25,0.7),
+          r: rand(1.2,2.6),
+          color: (Math.random()<0.5) ? 'rgba(255,210,210,.90)' : 'rgba(255,244,163,.90)',
+          shape: (Math.random()<0.5) ? 'star' : 'dot'
+        })
+      }
       for (let i=state.bullets.length-1;i>=0;i--){
         const b = state.bullets[i]
         b.x += b.vx*dt
@@ -2524,11 +2654,17 @@
           if (b.x >= left && b.x <= right && b.y >= top && b.y <= bottom){
             state.bullets.splice(j,1)
             if (c.kind === 'powerup'){
+              if (c.powerType === 'double'){
+                state.doubleShotsLeft = Math.min(12, state.doubleShotsLeft + 3)
+                state.doubleGlowT = Math.max(state.doubleGlowT, 1.2)
+                showToast('Carrot power! Double shot ×3', 'info', 1400)
+                carrotPowerEffect(c.x, c.y)
+              } else {
               state.lives = Math.min(9, state.lives + 1)
-              livesEl.textContent = 'Lives ' + state.lives
-              showToast('Extra life +1', 'info', 1200)
-              lifeGainEffect(c.x, c.y)
-              state.circles.splice(i,1)
+              updateLivesUI()
+                showToast('Extra life +1', 'info', 1200)
+                lifeGainEffect(c.x, c.y)
+              }
             } else {
               const key = c.key
               const before = state.consumed[key]
@@ -2568,14 +2704,21 @@
         if (dist2 <= pr*pr){
           if (p.hitCd <= 0){
             if (c.kind === 'powerup'){
-              state.lives = Math.min(9, state.lives + 1)
-              livesEl.textContent = 'Lives ' + state.lives
-              showToast('Extra life +1', 'info', 1200)
-              lifeGainEffect(p.x, p.y)
+              if (c.powerType === 'double'){
+                state.doubleShotsLeft = Math.min(12, state.doubleShotsLeft + 3)
+                state.doubleGlowT = Math.max(state.doubleGlowT, 1.2)
+                showToast('Carrot power! Double shot ×3', 'info', 1400)
+                carrotPowerEffect(p.x, p.y)
+              } else {
+                state.lives = Math.min(9, state.lives + 1)
+                updateLivesUI()
+                showToast('Extra life +1', 'info', 1200)
+                lifeGainEffect(p.x, p.y)
+              }
               state.circles.splice(i,1)
             } else {
               state.lives = Math.max(0, state.lives - 1)
-              livesEl.textContent = 'Lives ' + state.lives
+              updateLivesUI()
               p.hitCd = 1.0
               p.shakeT = p.shakeD
               showToast('Life lost!', 'info', 1200)
@@ -2604,8 +2747,13 @@
         const cur = state.consumed[n.key] ?? 0
         const pct = tar > 0 ? Math.min(1, cur / tar) : 0
         const exceeded = cur > tar
+        const warn = !exceeded && (
+          (tar <= 1e-9) ||
+          (tar > 0 && Math.abs(tar - cur) <= 1e-9) ||
+          (tar > 0 && (tar - cur) <= (0.5 + 1e-9) && (tar - cur) > 1e-9)
+        )
         const col = colorOf(n.key)
-        chips.push(`<div class="chip${exceeded ? ' exceeded' : ''}" style="--chip-color:${col}"><div class="label">${n.label}</div><div class="val">${cur} / ${tar}</div><div class="bar"><div class="fill" style="width:${(pct*100).toFixed(0)}%"></div></div></div>`)
+        chips.push(`<div class="chip${exceeded ? ' exceeded' : (warn ? ' warning' : '')}" style="--chip-color:${col}"><div class="label">${n.label}</div><div class="val">${cur} / ${tar}</div><div class="bar"><div class="fill" style="width:${(pct*100).toFixed(0)}%"></div></div></div>`)
       }
       targetsEl.innerHTML = chips.join('')
       updateGameEnergyUI()
@@ -2726,6 +2874,22 @@
       }
       ctx.scale(p.face || 1, 1)
       ctx.rotate(p.lean || 0)
+      if (state.doubleGlowT > 0 || state.doubleShotsLeft > 0){
+        const t = Math.max(0, Math.min(1, (state.doubleGlowT > 0 ? state.doubleGlowT : 0.6) / 1.2))
+        const pulse = 0.6 + 0.4*Math.sin(state.time*9.5)
+        const r0 = 24 + pulse*3
+        ctx.save()
+        ctx.globalAlpha = 0.22 + 0.16*pulse
+        const g = ctx.createRadialGradient(0, 0, r0*0.35, 0, 0, r0)
+        g.addColorStop(0, 'rgba(255,244,163,.50)')
+        g.addColorStop(0.55, 'rgba(255,210,210,.22)')
+        g.addColorStop(1, 'rgba(255,150,90,0)')
+        ctx.fillStyle = g
+        ctx.beginPath()
+        ctx.arc(0, 2, r0, 0, Math.PI*2)
+        ctx.fill()
+        ctx.restore()
+      }
       const moving = !!(p.moving || keys['ArrowUp']||keys['KeyW']||keys['ArrowDown']||keys['KeyS']||keys['ArrowLeft']||keys['KeyA']||keys['ArrowRight']||keys['KeyD'])
       function rrect(x,y,w,h,rad){
         const r = Math.min(rad, w/2, h/2)
@@ -3028,7 +3192,7 @@
         }
         ctx.restore()
       }
-      for (const b of state.bullets){ drawStar(b.x,b.y,6) }
+      for (const b of state.bullets){ drawStar(b.x,b.y,b.r || 6) }
       for (const c of state.circles){
         ctx.textBaseline = 'middle'
         ctx.textAlign = 'center'
@@ -3091,53 +3255,105 @@
           ctx.shadowColor = 'rgba(0,0,0,.25)'
           ctx.shadowBlur = 10
           ctx.shadowOffsetY = 5
-          ctx.fillStyle = 'rgba(22,18,14,.92)'
-          ctx.beginPath()
-          ctx.arc(c.x, headY, hr*0.92, 0, Math.PI*2)
-          ctx.fill()
-          ctx.shadowBlur = 0
-          ctx.shadowOffsetY = 0
-          strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr*0.92, 0, Math.PI*2) }, ink, 2.1, jx, jy, 0.8, 0.45)
-          ctx.fillStyle = 'rgba(255,255,255,.92)'
-          ctx.beginPath()
-          ctx.arc(c.x-hr*0.26, headY-hr*0.10, hr*0.12, 0, Math.PI*2)
-          ctx.arc(c.x+hr*0.26, headY-hr*0.10, hr*0.12, 0, Math.PI*2)
-          ctx.fill()
-          ctx.save()
-          ctx.translate(c.x, headY)
-          textureLocalCircle(hr*0.90, phase*16.5 + c.x*0.013 + c.y*0.017, 'rgba(60,52,44,.22)', 'rgba(255,255,255,.18)')
-          ctx.restore()
-          const leafG = ctx.createLinearGradient(c.x-4, headY-hr*1.25, c.x+4, headY-hr*0.55)
-          leafG.addColorStop(0,'rgba(140,182,92,.95)')
-          leafG.addColorStop(1,'rgba(62,120,64,.95)')
-          ctx.fillStyle = leafG
-          ctx.beginPath()
-          ctx.ellipse(c.x+hr*0.20, headY-hr*1.05, hr*0.52, hr*0.26, -0.65, 0, Math.PI*2)
-          ctx.fill()
-          ctx.strokeStyle = 'rgba(50,42,34,.45)'
-          ctx.lineWidth = 1.5
-          ctx.beginPath()
-          ctx.moveTo(c.x+hr*0.02, headY-hr*1.18)
-          ctx.quadraticCurveTo(c.x+hr*0.12, headY-hr*0.95, c.x+hr*0.35, headY-hr*0.86)
-          ctx.stroke()
-          const heartG = ctx.createRadialGradient(c.x-3, headY+hr*0.30, 2, c.x, headY+hr*0.35, 10)
-          heartG.addColorStop(0,'rgba(255,210,210,.95)')
-          heartG.addColorStop(1,'rgba(172,44,52,.98)')
-          ctx.fillStyle = heartG
-          ctx.beginPath()
-          ctx.arc(c.x-hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
-          ctx.arc(c.x+hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
-          ctx.lineTo(c.x, headY+hr*0.62)
-          ctx.closePath()
-          ctx.fill()
-          strokeTwice(() => {
+          if (c.powerType === 'double'){
+            ctx.translate(c.x, headY)
+            ctx.rotate(-0.15 + Math.sin(state.time*2 + phase)*0.05)
+            const bodyG = ctx.createLinearGradient(-hr*0.2, -hr*0.9, hr*0.4, hr*1.1)
+            bodyG.addColorStop(0, 'rgba(255,214,170,.96)')
+            bodyG.addColorStop(0.45, 'rgba(255,150,90,.96)')
+            bodyG.addColorStop(1, 'rgba(210,88,40,.96)')
+            ctx.fillStyle = bodyG
+            ctx.beginPath()
+            ctx.moveTo(0, hr*1.10)
+            ctx.quadraticCurveTo(-hr*0.70, hr*0.55, -hr*0.30, -hr*0.80)
+            ctx.quadraticCurveTo(0, -hr*1.00, hr*0.30, -hr*0.80)
+            ctx.quadraticCurveTo(hr*0.70, hr*0.55, 0, hr*1.10)
+            ctx.closePath()
+            ctx.fill()
+            ctx.shadowBlur = 0
+            ctx.shadowOffsetY = 0
+            strokeTwice(() => {
+              ctx.beginPath()
+              ctx.moveTo(0, hr*1.10)
+              ctx.quadraticCurveTo(-hr*0.70, hr*0.55, -hr*0.30, -hr*0.80)
+              ctx.quadraticCurveTo(0, -hr*1.00, hr*0.30, -hr*0.80)
+              ctx.quadraticCurveTo(hr*0.70, hr*0.55, 0, hr*1.10)
+              ctx.closePath()
+            }, ink, 2.0, jx, jy, 0.75, 0.45)
+            const leafG = ctx.createLinearGradient(-hr*0.2, -hr*1.25, hr*0.2, -hr*0.55)
+            leafG.addColorStop(0,'rgba(140,182,92,.95)')
+            leafG.addColorStop(1,'rgba(62,120,64,.95)')
+            ctx.fillStyle = leafG
+            ctx.beginPath()
+            ctx.ellipse(-hr*0.20, -hr*1.02, hr*0.45, hr*0.20, -0.85, 0, Math.PI*2)
+            ctx.ellipse(hr*0.20, -hr*1.06, hr*0.45, hr*0.20, 0.85, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(255,255,255,.92)'
+            ctx.beginPath()
+            ctx.arc(-hr*0.22, -hr*0.15, hr*0.12, 0, Math.PI*2)
+            ctx.arc(hr*0.22, -hr*0.15, hr*0.12, 0, Math.PI*2)
+            ctx.fill()
+            ctx.fillStyle = 'rgba(22,18,14,.92)'
+            ctx.beginPath()
+            ctx.arc(-hr*0.20, -hr*0.13, hr*0.06, 0, Math.PI*2)
+            ctx.arc(hr*0.24, -hr*0.13, hr*0.06, 0, Math.PI*2)
+            ctx.fill()
+            ctx.strokeStyle = 'rgba(255,210,210,.70)'
+            ctx.lineWidth = 2
+            ctx.beginPath()
+            ctx.arc(-hr*0.46, 0.02, hr*0.12, 0, Math.PI*2)
+            ctx.arc(hr*0.46, 0.02, hr*0.12, 0, Math.PI*2)
+            ctx.stroke()
+            ctx.restore()
+          } else {
+            ctx.fillStyle = 'rgba(22,18,14,.92)'
+            ctx.beginPath()
+            ctx.arc(c.x, headY, hr*0.92, 0, Math.PI*2)
+            ctx.fill()
+            ctx.shadowBlur = 0
+            ctx.shadowOffsetY = 0
+            strokeTwice(() => { ctx.beginPath(); ctx.arc(c.x, headY, hr*0.92, 0, Math.PI*2) }, ink, 2.1, jx, jy, 0.8, 0.45)
+            ctx.fillStyle = 'rgba(255,255,255,.92)'
+            ctx.beginPath()
+            ctx.arc(c.x-hr*0.26, headY-hr*0.10, hr*0.12, 0, Math.PI*2)
+            ctx.arc(c.x+hr*0.26, headY-hr*0.10, hr*0.12, 0, Math.PI*2)
+            ctx.fill()
+            ctx.save()
+            ctx.translate(c.x, headY)
+            textureLocalCircle(hr*0.90, phase*16.5 + c.x*0.013 + c.y*0.017, 'rgba(60,52,44,.22)', 'rgba(255,255,255,.18)')
+            ctx.restore()
+            const leafG = ctx.createLinearGradient(c.x-4, headY-hr*1.25, c.x+4, headY-hr*0.55)
+            leafG.addColorStop(0,'rgba(140,182,92,.95)')
+            leafG.addColorStop(1,'rgba(62,120,64,.95)')
+            ctx.fillStyle = leafG
+            ctx.beginPath()
+            ctx.ellipse(c.x+hr*0.20, headY-hr*1.05, hr*0.52, hr*0.26, -0.65, 0, Math.PI*2)
+            ctx.fill()
+            ctx.strokeStyle = 'rgba(50,42,34,.45)'
+            ctx.lineWidth = 1.5
+            ctx.beginPath()
+            ctx.moveTo(c.x+hr*0.02, headY-hr*1.18)
+            ctx.quadraticCurveTo(c.x+hr*0.12, headY-hr*0.95, c.x+hr*0.35, headY-hr*0.86)
+            ctx.stroke()
+            const heartG = ctx.createRadialGradient(c.x-3, headY+hr*0.30, 2, c.x, headY+hr*0.35, 10)
+            heartG.addColorStop(0,'rgba(255,210,210,.95)')
+            heartG.addColorStop(1,'rgba(172,44,52,.98)')
+            ctx.fillStyle = heartG
             ctx.beginPath()
             ctx.arc(c.x-hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
             ctx.arc(c.x+hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
             ctx.lineTo(c.x, headY+hr*0.62)
             ctx.closePath()
-          }, 'rgba(80,22,26,.55)', 1.6, jx*0.8, jy*0.8, 0.7, 0.4)
-          ctx.restore()
+            ctx.fill()
+            strokeTwice(() => {
+              ctx.beginPath()
+              ctx.arc(c.x-hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
+              ctx.arc(c.x+hr*0.22, headY+hr*0.18, hr*0.24, 0, Math.PI*2)
+              ctx.lineTo(c.x, headY+hr*0.62)
+              ctx.closePath()
+            }, 'rgba(80,22,26,.55)', 1.6, jx*0.8, jy*0.8, 0.7, 0.4)
+            ctx.restore()
+          }
         } else {
           if (c.alienType === 'food'){
             const key = c.foodKey || c.key || 'Grains'
@@ -3709,10 +3925,14 @@
       for (const pz of state.particles){
         const a = Math.max(0, Math.min(1, pz.life*1.6))
         ctx.globalAlpha = a
-        ctx.fillStyle = pz.color || 'rgba(255,255,255,.85)'
-        ctx.beginPath()
-        ctx.arc(pz.x, pz.y, pz.r||2, 0, Math.PI*2)
-        ctx.fill()
+        if (pz.shape === 'star'){
+          drawStar(pz.x, pz.y, pz.r||3)
+        } else {
+          ctx.fillStyle = pz.color || 'rgba(255,255,255,.85)'
+          ctx.beginPath()
+          ctx.arc(pz.x, pz.y, pz.r||2, 0, Math.PI*2)
+          ctx.fill()
+        }
         ctx.globalAlpha = 1
       }
     }
