@@ -92,6 +92,8 @@
       font-variant-numeric:tabular-nums;
       font-size:14px;
     }
+    button.badge{ font:inherit; color:inherit }
+    #targetsToggle{ display:none }
     .hint{ color:var(--muted); font-weight:900 }
     #targets{
       position:relative;
@@ -190,11 +192,11 @@
       grid-template-columns:1fr;
       align-content:center;
       gap:18px;
-      padding:6px 6px;
+      padding:6px 6px 10px;
     }
     .home-title{
       font-size:clamp(40px, 5.2vw, 56px);
-      line-height:1.03;
+      line-height:1.10;
       font-weight:900;
       letter-spacing:-.02em;
       text-transform:none;
@@ -202,6 +204,8 @@
       -webkit-background-clip:text;
       background-clip:text;
       color:transparent;
+      display:inline-block;
+      padding-bottom:4px;
     }
     .home-splash .btn.primary{
       width:fit-content;
@@ -215,6 +219,21 @@
         padding:6px 2px;
         grid-template-columns:1fr;
       }
+      .home-splash::before{
+        content:"";
+        position:absolute;
+        left:-140px;
+        top:-120px;
+        width:560px;
+        height:560px;
+        border-radius:999px;
+        background:
+          radial-gradient(circle at 40% 42%, rgba(255,255,255,.10), transparent 52%),
+          repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 2px, transparent 2px 10px);
+        filter: blur(0.2px);
+        opacity:.55;
+        pointer-events:none;
+      }
       .home-splash::after{
         content:"";
         position:absolute;
@@ -225,9 +244,13 @@
         height:520px;
         border-radius:999px;
         background:
-          radial-gradient(circle at 30% 28%, rgba(255,255,255,.20), transparent 48%),
-          radial-gradient(circle at 70% 72%, rgba(76,125,255,.18), transparent 52%),
-          radial-gradient(circle at 50% 50%, rgba(88,150,130,.12), transparent 58%);
+          conic-gradient(from -90deg,
+            rgba(215,200,146,.78) 0 55%,
+            rgba(88,150,130,.70) 55% 75%,
+            rgba(76,125,255,.72) 75% 100%),
+          radial-gradient(circle at 50% 50%, rgba(255,255,255,.10), transparent 58%);
+        -webkit-mask: radial-gradient(closest-side, transparent 56%, #000 58%, #000 74%, transparent 76%);
+        mask: radial-gradient(closest-side, transparent 56%, #000 58%, #000 74%, transparent 76%);
         border:1px solid rgba(255,255,255,.10);
         box-shadow:
           0 50px 140px rgba(0,0,0,.35),
@@ -253,6 +276,18 @@
       .home-title{
         font-size:clamp(34px, 9.2vw, 44px);
         letter-spacing:-.01em;
+      }
+      .home-splash::before{
+        content:"";
+        position:absolute;
+        inset:-18px -18px auto -18px;
+        height:220px;
+        background:
+          radial-gradient(220px 220px at 14% 30%, rgba(76,125,255,.20), transparent 60%),
+          radial-gradient(240px 240px at 88% 40%, rgba(255,77,79,.14), transparent 62%),
+          radial-gradient(280px 280px at 48% 92%, rgba(215,200,146,.10), transparent 62%);
+        opacity:.95;
+        pointer-events:none;
       }
       .home-splash .btn.primary{
         width:100%;
@@ -545,14 +580,34 @@
     @media (max-width: 520px){
       #topbar{ flex-wrap:wrap }
       #hud{ width:100% }
-      #targets{ width:100%; flex:0 0 auto }
+      #targetsToggle{ display:inline-flex }
+      #targets{
+        display:none;
+        position:fixed;
+        top:calc(58px + env(safe-area-inset-top) + var(--vv-top, 0px));
+        left:calc(10px + env(safe-area-inset-left));
+        right:calc(10px + env(safe-area-inset-right));
+        width:auto;
+        max-height:min(60vh, 420px);
+        overflow:auto;
+        grid-template-columns:repeat(2, minmax(0, 1fr));
+        padding:10px 10px;
+        z-index:18;
+      }
+      body.targets-open #targets{ display:grid }
       #hud{ top:10px; left:10px; padding:10px 10px }
       .badge{ font-size:15px }
       .chip .label{ font-size:12px }
       .chip .val{ font-size:14px }
       .chip{ min-width:0 }
+      #targets .chip{ padding:7px 8px; border-radius:12px }
+      #targets .chip .label{ font-size:11px }
+      #targets .chip .val{ font-size:12px }
       .form-grid input, .form-grid select{ min-height:46px; line-height:1.15 }
       #breakdownTable{
+        --scrollTrack:#14131a;
+        --scrollThumb:#4a232a;
+        --scrollThumbHover:#62303a;
         max-width:100%;
         overflow-x:auto;
         overflow-y:hidden;
@@ -560,6 +615,17 @@
         padding-bottom:8px;
       }
       #breakdownTable .tbl{ min-width:560px }
+      #manualBreakdownTable{
+        --scrollTrack:#14131a;
+        --scrollThumb:#4a232a;
+        --scrollThumbHover:#62303a;
+        max-width:100%;
+        overflow-x:auto;
+        overflow-y:hidden;
+        -webkit-overflow-scrolling:touch;
+        padding-bottom:8px;
+      }
+      #manualBreakdownTable .tbl{ min-width:560px }
       #toast{
         left:50%;
         right:auto;
@@ -579,6 +645,7 @@
         <span id="energy" class="badge">Estimated Energy 0 kcal</span>
         <span id="timer" class="badge">Time 0.0s</span>
         <span id="lives" class="badge">Lives 5</span>
+        <button id="targetsToggle" class="badge" type="button" aria-expanded="false">Servings</button>
       </div>
     </div>
     <div id="targets"></div>
@@ -771,6 +838,7 @@
     const ctx = canvas.getContext('2d')
     const energyEl = document.getElementById('energy')
     const targetsEl = document.getElementById('targets')
+    const targetsToggleBtn = document.getElementById('targetsToggle')
     const timerEl = document.getElementById('timer')
     const livesEl = document.getElementById('lives')
     const overlay = document.getElementById('overlay')
@@ -898,6 +966,16 @@
         setTimeout(() => { div.remove() }, 400)
       }, timeoutMs)
     }
+    function setTargetsOpen(open){
+      document.body.classList.toggle('targets-open', !!open)
+      if (!targetsToggleBtn) return
+      targetsToggleBtn.setAttribute('aria-expanded', open ? 'true' : 'false')
+      targetsToggleBtn.textContent = open ? 'Close' : 'Servings'
+    }
+    setTargetsOpen(false)
+    targetsToggleBtn && targetsToggleBtn.addEventListener('click', () => {
+      setTargetsOpen(!document.body.classList.contains('targets-open'))
+    })
     function lifeGainEffect(x,y){
       const cols = [
         'rgba(255,224,170,.95)',
@@ -966,9 +1044,9 @@
       const macroTarget = macroOverride && isFinite(macroOverride.cPct) && isFinite(macroOverride.pPct) && isFinite(macroOverride.fPct)
         ? macroOverride
         : { cPct: 55, pPct: 20, fPct: 25 }
-      const isMacroTargetTypical = macroTarget.cPct >= 50 && macroTarget.cPct <= 60
-        && macroTarget.pPct >= 10 && macroTarget.pPct <= 20
-        && macroTarget.fPct >= 20 && macroTarget.fPct <= 30
+      const isMacroTargetTypical = macroTarget.cPct >= 45 && macroTarget.cPct <= 65
+        && macroTarget.pPct >= 5 && macroTarget.pPct <= 25
+        && macroTarget.fPct >= 15 && macroTarget.fPct <= 35
         && Math.abs((macroTarget.cPct + macroTarget.pPct + macroTarget.fPct) - 100) <= 0.6
       const macroImbalance = Math.max(
         Math.max(0, 50 - macroTarget.cPct, macroTarget.cPct - 60),
@@ -976,7 +1054,8 @@
         Math.max(0, 20 - macroTarget.fPct, macroTarget.fPct - 30)
       )
       const severeImbalance = macroImbalance >= 8
-      const servingFirst = !!isMacroTargetTypical && kcal >= 1200 && kcal <= 2800
+      const servingStep = 0.5
+      const roundServing = (n) => Math.round(n / servingStep) * servingStep
       const carbTargetG = (kcal * (macroTarget.cPct/100)) / 4
       const proteinTargetG = (kcal * (macroTarget.pPct/100)) / 4
       const fatTargetG = (kcal * (macroTarget.fPct/100)) / 9
@@ -989,18 +1068,33 @@
         dairyLow: { c:12, p:8, f:4, kcal:120 },
       }
       const recommended = { grains:[10,20], proteins:[4,8], dairy:[1,2], veg:[3,5], fruit:[2,4], oils:[3,7] }
+      const recommendedScale = isMacroTargetTypical && kcal > 2200 ? clamp(kcal / 2000, 1, 2.2) : 1
+      const scaleRange = (r, scale) => {
+        const lo = roundServing(Math.max(0, r[0] * scale))
+        const hi = roundServing(Math.max(0, r[1] * scale))
+        return hi >= lo ? [lo, hi] : [lo, lo]
+      }
+      const effRecommended = recommendedScale === 1 ? recommended : {
+        grains: scaleRange(recommended.grains, recommendedScale),
+        proteins: scaleRange(recommended.proteins, recommendedScale),
+        dairy: scaleRange(recommended.dairy, recommendedScale),
+        veg: scaleRange(recommended.veg, recommendedScale),
+        fruit: scaleRange(recommended.fruit, recommendedScale),
+        oils: scaleRange(recommended.oils, recommendedScale),
+      }
+      const severeFreeRanges = { grains:[0, 70], proteins:[0, 40], dairy:[0, 10], veg:[0, 24], fruit:[0, 24], oils:[0, 40] }
       const imbalanceRanges = severeImbalance
         ? { grains:[0, 45], proteins:[0, 22], dairy:[0, 5], veg:[0, 14], fruit:[0, 12], oils:[3, 20] }
         : { grains:[0, 35], proteins:[0, 16], dairy:[0, 3], veg:[0, 10], fruit:[0, 8], oils:[3, 16] }
-      let energyTolPct = 0.02
-      let macroMaxAbsPct = 3
-      let minE = kcal * (1 - energyTolPct)
-      let maxE = kcal * (1 + energyTolPct)
-      function setConstraints(nextEnergyTolPct, nextMacroMaxAbsPct){
-        energyTolPct = nextEnergyTolPct
+      let energyTolAbsKcal = 100
+      let macroMaxAbsPct = 2
+      let minE = kcal - energyTolAbsKcal
+      let maxE = kcal + energyTolAbsKcal
+      function setConstraints(nextEnergyTolAbsKcal, nextMacroMaxAbsPct){
+        energyTolAbsKcal = nextEnergyTolAbsKcal
         macroMaxAbsPct = nextMacroMaxAbsPct
-        minE = kcal * (1 - energyTolPct)
-        maxE = kcal * (1 + energyTolPct)
+        minE = kcal - energyTolAbsKcal
+        maxE = kcal + energyTolAbsKcal
       }
       function totals(x1,x2,x3,x4,x5,x6){
         const carbsG = x1*FOOD.grains.c + x3*FOOD.dairyLow.c + x4*FOOD.veg.c + x5*FOOD.fruit.c
@@ -1044,70 +1138,110 @@
         if (!isFinite(t.totalE) || t.totalE <= 0) return false
         if (!(t.totalE >= minE && t.totalE <= maxE)) return false
         if (macroMaxAbs(t) > macroMaxAbsPct + 1e-9) return false
-        if (!(t.fatG > 0)) return false
-        const oilFatG = s.o * FOOD.oil.f
-        if (oilFatG / t.fatG < 0.4) return false
-        if (s.o < 3) return false
+        const needsFat = macroTarget.fPct > 0.5
+        if (needsFat && !(t.fatG > 0)) return false
+        if (!severeImbalance && needsFat){
+          const oilFatG = s.o * FOOD.oil.f
+          if (oilFatG / t.fatG < 0.4) return false
+          if (s.o < (isMacroTargetTypical ? effRecommended.oils[0] : 3)) return false
+        }
         return true
       }
+
+      if (isMacroTargetTypical && !severeImbalance && kcal > 2000){
+        const baseKcal = 2000
+        const base = computeTargetsTaiwan(baseKcal, macroTarget, macroSource)
+        const scale = kcal / baseKcal
+        const b = base.targets
+        const scaled = {
+          g: roundServing(b['Grains'] * scale),
+          p: roundServing(b['Proteins'] * scale),
+          d: roundServing(b['Dairy'] * scale),
+          v: roundServing(b['Vegetables'] * scale),
+          r: roundServing(b['Fruits'] * scale),
+          o: roundServing(b['Oils and Nuts'] * scale),
+        }
+        const t = totals(scaled.g, scaled.p, scaled.d, scaled.v, scaled.r, scaled.o)
+        const rr = v => roundServing(v)
+        adjustments.push('Scaled servings proportionally from a 2000 kcal baseline')
+        const abs = macroAbsStats(t)
+        const gap = Math.abs(t.totalE - kcal)
+        if (abs.maxAbs > 2 + 1e-9 || gap > 100 + 1e-6){
+          adjustments.push(`Rounded to 0.5 serving steps; macro max diff ${Math.round(abs.maxAbs*10)/10}%, kcal diff ${Math.round(gap)}`)
+        }
+        return {
+          kcal,
+          targets: {
+            'Grains': rr(scaled.g),
+            'Proteins': rr(scaled.p),
+            'Dairy': rr(scaled.d),
+            'Vegetables': rr(scaled.v),
+            'Fruits': rr(scaled.r),
+            'Oils and Nuts': rr(scaled.o),
+          },
+          macros: {
+            carbsG: Math.round(t.carbsG*10)/10,
+            proteinG: Math.round(t.proteinG*10)/10,
+            fatG: Math.round(t.fatG*10)/10,
+            totalKcal: Math.round(t.totalE),
+            carbsPct: Math.round(t.cPct*10)/10,
+            proteinPct: Math.round(t.pPct*10)/10,
+            fatPct: Math.round(t.fPct*10)/10,
+          },
+          adjustments,
+          assumptions: {
+            dairyType: 'low-fat',
+            proteinType: 'low-fat',
+            macroTarget,
+            macroSource: macroSource || 'auto',
+          }
+        }
+      }
       function exceedScore(s){
+        const ref = isMacroTargetTypical ? effRecommended : recommended
         return (
-          Math.max(0, s.g - recommended.grains[1]) +
-          Math.max(0, s.p - recommended.proteins[1]) +
-          Math.max(0, s.d - recommended.dairy[1]) +
-          Math.max(0, s.v - recommended.veg[1]) +
-          Math.max(0, s.r - recommended.fruit[1]) +
-          Math.max(0, s.o - recommended.oils[1])
+          Math.max(0, s.g - ref.grains[1]) +
+          Math.max(0, s.p - ref.proteins[1]) +
+          Math.max(0, s.d - ref.dairy[1]) +
+          Math.max(0, s.v - ref.veg[1]) +
+          Math.max(0, s.r - ref.fruit[1]) +
+          Math.max(0, s.o - ref.oils[1])
         )
       }
       function servingDeviation(s){
+        const ref = isMacroTargetTypical ? effRecommended : recommended
         return (
-          Math.max(0, recommended.grains[0] - s.g) + Math.max(0, s.g - recommended.grains[1]) +
-          Math.max(0, recommended.proteins[0] - s.p) + Math.max(0, s.p - recommended.proteins[1]) +
-          Math.max(0, recommended.dairy[0] - s.d) + Math.max(0, s.d - recommended.dairy[1]) +
-          Math.max(0, recommended.veg[0] - s.v) + Math.max(0, s.v - recommended.veg[1]) +
-          Math.max(0, recommended.fruit[0] - s.r) + Math.max(0, s.r - recommended.fruit[1]) +
-          Math.max(0, 3 - s.o) + Math.max(0, s.o - recommended.oils[1])
+          Math.max(0, ref.grains[0] - s.g) + Math.max(0, s.g - ref.grains[1]) +
+          Math.max(0, ref.proteins[0] - s.p) + Math.max(0, s.p - ref.proteins[1]) +
+          Math.max(0, ref.dairy[0] - s.d) + Math.max(0, s.d - ref.dairy[1]) +
+          Math.max(0, ref.veg[0] - s.v) + Math.max(0, s.v - ref.veg[1]) +
+          Math.max(0, ref.fruit[0] - s.r) + Math.max(0, s.r - ref.fruit[1]) +
+          Math.max(0, ref.oils[0] - s.o) + Math.max(0, s.o - ref.oils[1])
         )
       }
       function chooseBetter(a, b){
         if (!a) return b
         if (!b) return a
-        if (servingFirst){
-          const aDev = servingDeviation(a)
-          const bDev = servingDeviation(b)
-          if (bDev < aDev - 1e-9) return b
-          if (bDev > aDev + 1e-9) return a
-          if (b.energyGap < a.energyGap - 1e-6) return b
-          if (b.energyGap > a.energyGap + 1e-6) return a
-          const aMax = macroMaxAbs(a.t)
-          const bMax = macroMaxAbs(b.t)
-          if (bMax < aMax - 1e-9) return b
-          if (bMax > aMax + 1e-9) return a
-          if (b.exceed < a.exceed - 1e-9) return b
-          if (b.exceed > a.exceed + 1e-9) return a
-          if (b.sse < a.sse - 1e-9) return b
-          return a
-        }
-        const aBand = macroBand(a.t)
-        const bBand = macroBand(b.t)
-        if (bBand < aBand) return b
-        if (bBand > aBand) return a
         const aAbs = macroAbsStats(a.t)
         const bAbs = macroAbsStats(b.t)
         if (bAbs.maxAbs < aAbs.maxAbs - 1e-9) return b
         if (bAbs.maxAbs > aAbs.maxAbs + 1e-9) return a
-        if (b.energyGap < a.energyGap - 1e-6) return b
-        if (b.energyGap > a.energyGap + 1e-6) return a
-        if (bAbs.rangeAbs < aAbs.rangeAbs - 1e-9) return b
-        if (bAbs.rangeAbs > aAbs.rangeAbs + 1e-9) return a
+        if (b.sse < a.sse - 1e-9) return b
+        if (b.sse > a.sse + 1e-9) return a
         if (bAbs.sumAbs < aAbs.sumAbs - 1e-9) return b
         if (bAbs.sumAbs > aAbs.sumAbs + 1e-9) return a
-        if (b.sse < a.sse - 1e-9) return b
-        const macroSlack = 0.10
-        if (b.sse <= a.sse + macroSlack){
-          if (Math.abs(b.energyGap - a.energyGap) <= 1e-6 && b.exceed < a.exceed - 1e-9) return b
+        if (bAbs.rangeAbs < aAbs.rangeAbs - 1e-9) return b
+        if (bAbs.rangeAbs > aAbs.rangeAbs + 1e-9) return a
+        if (b.energyGap < a.energyGap - 1e-6) return b
+        if (b.energyGap > a.energyGap + 1e-6) return a
+        if (isMacroTargetTypical){
+          const aDev = servingDeviation(a)
+          const bDev = servingDeviation(b)
+          if (bDev < aDev - 1e-9) return b
+          if (bDev > aDev + 1e-9) return a
         }
+        if (b.exceed < a.exceed - 1e-9) return b
+        if (b.exceed > a.exceed + 1e-9) return a
         return a
       }
       function estimateSequential(ranges){
@@ -1115,38 +1249,40 @@
         let remP = proteinTargetG
         let remF = fatTargetG
         let v = kcal >= 2500 ? 5 : kcal >= 2000 ? 4 : 3
-        v = halfRound(clamp(v, ranges.veg[0], ranges.veg[1]))
+        v = roundServing(clamp(v, ranges.veg[0], ranges.veg[1]))
         remC -= v*FOOD.veg.c
         remP -= v*FOOD.veg.p
         let r = 2
         if (kcal >= 2000 && kcal < 2200) r = 3
         else if (kcal >= 2200 && kcal < 2500) r = 3.5
         else if (kcal >= 2500) r = 4
-        r = halfRound(clamp(r, ranges.fruit[0], ranges.fruit[1]))
+        r = roundServing(clamp(r, ranges.fruit[0], ranges.fruit[1]))
         remC -= r*FOOD.fruit.c
-        let g = halfRound(remC / FOOD.grains.c)
-        g = halfRound(clamp(g, ranges.grains[0], ranges.grains[1]))
+        let g = roundServing(remC / FOOD.grains.c)
+        g = roundServing(clamp(g, ranges.grains[0], ranges.grains[1]))
         remC -= g*FOOD.grains.c
         remP -= g*FOOD.grains.p
-        let p = halfRound(remP / FOOD.proteinLow.p)
-        p = halfRound(clamp(p, ranges.proteins[0], ranges.proteins[1]))
+        let p = roundServing(remP / FOOD.proteinLow.p)
+        p = roundServing(clamp(p, ranges.proteins[0], ranges.proteins[1]))
         remP -= p*FOOD.proteinLow.p
         remF -= p*FOOD.proteinLow.f
-        let o = halfRound(remF / FOOD.oil.f)
-        o = halfRound(clamp(o, Math.max(3, ranges.oils[0]), ranges.oils[1]))
+        const minOil = severeImbalance ? ranges.oils[0] : Math.max(3, ranges.oils[0])
+        let o = roundServing(remF / FOOD.oil.f)
+        o = roundServing(clamp(o, minOil, ranges.oils[1]))
         let d = kcal >= 2700 ? 2 : 1.5
-        d = halfRound(clamp(d, ranges.dairy[0], ranges.dairy[1]))
+        d = roundServing(clamp(d, ranges.dairy[0], ranges.dairy[1]))
         return { g,p,d,v,r,o }
       }
       function refine(start, ranges){
-        const step = 0.5
+        const step = servingStep
         const mk = (s) => {
-          const g = halfRound(clamp(s.g, ranges.grains[0], ranges.grains[1]))
-          const p = halfRound(clamp(s.p, ranges.proteins[0], ranges.proteins[1]))
-          const d = halfRound(clamp(s.d, ranges.dairy[0], ranges.dairy[1]))
-          const v = halfRound(clamp(s.v, ranges.veg[0], ranges.veg[1]))
-          const r = halfRound(clamp(s.r, ranges.fruit[0], ranges.fruit[1]))
-          const o = halfRound(clamp(s.o, Math.max(3, ranges.oils[0]), ranges.oils[1]))
+          const minOil = severeImbalance ? ranges.oils[0] : Math.max(3, ranges.oils[0])
+          const g = roundServing(clamp(s.g, ranges.grains[0], ranges.grains[1]))
+          const p = roundServing(clamp(s.p, ranges.proteins[0], ranges.proteins[1]))
+          const d = roundServing(clamp(s.d, ranges.dairy[0], ranges.dairy[1]))
+          const v = roundServing(clamp(s.v, ranges.veg[0], ranges.veg[1]))
+          const r = roundServing(clamp(s.r, ranges.fruit[0], ranges.fruit[1]))
+          const o = roundServing(clamp(s.o, minOil, ranges.oils[1]))
           return { g,p,d,v,r,o }
         }
         let best = null
@@ -1155,8 +1291,8 @@
           best = { ...start, t: startT, sse: macroSse(startT), energyGap: Math.abs(startT.totalE - kcal), exceed: exceedScore(start) }
         }
         const vars = ['o', 'p', 'g', 'r', 'v', 'd']
-        const deltas = [ -2, -1, 1, 2 ].map(x => x * step)
-        for (let iter = 0; iter < 80; iter++){
+        const deltas = (severeImbalance ? [ -8, -4, -2, -1, 1, 2, 4, 8 ] : [ -2, -1, 1, 2 ]).map(x => x * step)
+        for (let iter = 0; iter < (severeImbalance ? 220 : 80); iter++){
           let improved = false
           let candidateBest = best
           const base = best ? { g:best.g, p:best.p, d:best.d, v:best.v, r:best.r, o:best.o } : start
@@ -1177,7 +1313,7 @@
         }
         return best
       }
-      const strictRanges = servingFirst ? recommended : imbalanceRanges
+      const strictRanges = severeImbalance ? severeFreeRanges : (isMacroTargetTypical ? effRecommended : imbalanceRanges)
       const relaxedRanges = {
         grains:[recommended.grains[0], 30],
         proteins:[recommended.proteins[0], 14],
@@ -1194,17 +1330,18 @@
         fruit:[0, 6],
         oils:[3, 14],
       }
-      function randHalf(lo, hi){
-        return halfRound(clamp(lo + Math.random()*(hi-lo), lo, hi))
+      function randStep(lo, hi){
+        return roundServing(clamp(lo + Math.random()*(hi-lo), lo, hi))
       }
       function randomStart(ranges){
+        const minOil = severeImbalance ? ranges.oils[0] : Math.max(3, ranges.oils[0])
         return {
-          g: randHalf(ranges.grains[0], ranges.grains[1]),
-          p: randHalf(ranges.proteins[0], ranges.proteins[1]),
-          d: randHalf(ranges.dairy[0], ranges.dairy[1]),
-          v: randHalf(ranges.veg[0], ranges.veg[1]),
-          r: randHalf(ranges.fruit[0], ranges.fruit[1]),
-          o: randHalf(Math.max(3, ranges.oils[0]), ranges.oils[1]),
+          g: randStep(ranges.grains[0], ranges.grains[1]),
+          p: randStep(ranges.proteins[0], ranges.proteins[1]),
+          d: randStep(ranges.dairy[0], ranges.dairy[1]),
+          v: randStep(ranges.veg[0], ranges.veg[1]),
+          r: randStep(ranges.fruit[0], ranges.fruit[1]),
+          o: randStep(minOil, ranges.oils[1]),
         }
       }
       function searchBest(ranges, tries){
@@ -1219,35 +1356,46 @@
         }
         return best
       }
-      let best = searchBest(strictRanges, 28)
+      const triesScale = severeImbalance ? 6 : 1
+      let best = searchBest(strictRanges, Math.round(28 * triesScale))
+      if (!best && severeImbalance){
+        setConstraints(100, 60)
+        adjustments.push('Target macro ratio may be infeasible; searching closest achievable ratio')
+        best = searchBest(strictRanges, Math.round(84 * triesScale)) || searchBest(relaxedRanges, Math.round(84 * triesScale))
+      }
       if (!best){
-        best = searchBest(relaxedRanges, 44)
+        best = searchBest(relaxedRanges, Math.round(44 * triesScale))
         if (best) adjustments.push('Relaxed upper serving limits to satisfy constraints')
       }
       if (!best){
-        best = searchBest(fallbackRanges, 60)
+        best = searchBest(fallbackRanges, Math.round(60 * triesScale))
         if (best) adjustments.push('Relaxed serving limits to find a feasible solution')
       }
       if (!best){
-        setConstraints(0.03, 5)
+        setConstraints(200, 8)
         adjustments.push('Relaxed macro and energy tolerances to find a feasible solution')
         best = searchBest(fallbackRanges, 80) || searchBest(relaxedRanges, 80) || searchBest(strictRanges, 80)
       }
       if (!best){
-        setConstraints(0.05, 8)
+        setConstraints(350, 15)
         adjustments.push('Further relaxed tolerances to find any feasible solution')
         best = searchBest(fallbackRanges, 120) || searchBest(relaxedRanges, 120) || searchBest(strictRanges, 120)
       }
       if (!best){
-        const baseGrains = halfRound(Math.max(0, (carbTargetG - 1*FOOD.dairyLow.c - 3*FOOD.veg.c - 2*FOOD.fruit.c) / FOOD.grains.c))
-        const baseProteins = halfRound(Math.max(0, (proteinTargetG - 1*FOOD.dairyLow.p - 3*FOOD.veg.p - baseGrains*FOOD.grains.p) / FOOD.proteinLow.p))
-        const baseOils = halfRound(Math.max(3, (fatTargetG - 1*FOOD.dairyLow.f - baseProteins*FOOD.proteinLow.f) / FOOD.oil.f))
+        const baseGrains = roundServing(Math.max(0, (carbTargetG - 1*FOOD.dairyLow.c - 3*FOOD.veg.c - 2*FOOD.fruit.c) / FOOD.grains.c))
+        const baseProteins = roundServing(Math.max(0, (proteinTargetG - 1*FOOD.dairyLow.p - 3*FOOD.veg.p - baseGrains*FOOD.grains.p) / FOOD.proteinLow.p))
+        const baseOils = roundServing(Math.max(severeImbalance ? 0 : 3, (fatTargetG - 1*FOOD.dairyLow.f - baseProteins*FOOD.proteinLow.f) / FOOD.oil.f))
         const t = totals(baseGrains, baseProteins, 1, 3, 2, baseOils)
         best = { g:baseGrains, p:baseProteins, d:1, v:3, r:2, o:baseOils, t, sse:Infinity, energyGap:Math.abs(t.totalE-kcal), exceed:0 }
         adjustments.push('Used heuristic fallback; tolerances may be exceeded')
       }
       const tfin = best.t || totals(best.g, best.p, best.d, best.v, best.r, best.o)
-      const rr = v => Math.round(v*2)/2
+      const finalAbs = macroAbsStats(tfin)
+      const finalEnergyGap = Math.abs(tfin.totalE - kcal)
+      if (finalAbs.maxAbs > 2 + 1e-9 || finalEnergyGap > 100 + 1e-6){
+        adjustments.push(`Closest achievable with this food model; macro max diff ${Math.round(finalAbs.maxAbs*10)/10}%, kcal diff ${Math.round(finalEnergyGap)}`)
+      }
+      const rr = v => roundServing(v)
       return {
         kcal,
         targets: {
@@ -1379,6 +1527,10 @@
         return { x: e.clientX - r.left, y: e.clientY - r.top }
       }
       canvas.addEventListener('pointerdown', e => {
+        if (document.body.classList.contains('targets-open')){
+          setTargetsOpen(false)
+          return
+        }
         if (setup.style.display !== 'none') return
         if (!state.running) return
         if (e.pointerType !== 'touch' && e.pointerType !== 'pen') return
@@ -1941,7 +2093,9 @@
       renderPortionReview(pending.result)
       showStep('portions')
     })
-    backToInputFromPortionsBtn.addEventListener('click', () => showStep('input'))
+    backToInputFromPortionsBtn.addEventListener('click', () => {
+      showStep(pending.mode === 'profile' ? 'energy' : 'input')
+    })
 
     adjustPortionsManuallyBtn && adjustPortionsManuallyBtn.addEventListener('click', () => {
       const targets = pending.targets || pending.result?.targets || targetsForEnergy(pending.kcal, pending.macroTarget, pending.macroMode).targets
@@ -1966,6 +2120,7 @@
       state.targets = { ...base, Proteins_medium: base.Proteins_medium ?? 0 }
       state.energyKcal = computeMacrosFromTargets(state.targets, state.dairyType).totalKcal
       updateGameEnergyUI()
+      setTargetsOpen(false)
       setup.style.display = 'none'
       overlay.style.display = 'none'
       reset()
