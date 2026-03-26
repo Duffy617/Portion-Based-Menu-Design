@@ -95,6 +95,19 @@
       font-variant-numeric:tabular-nums;
       font-size:14px;
     }
+    #miniTargets{
+      display:none;
+      gap:6px;
+      opacity:0.95;
+      white-space:nowrap;
+    }
+    #miniTargets .mt{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+    }
+    #miniTargets .lbl{ opacity:.88 }
+    #miniTargets .rem{ font-weight:900 }
     button.badge{ font:inherit; color:inherit }
     #targetsToggle{ display:none }
     .hint{ color:var(--muted); font-weight:900 }
@@ -713,6 +726,7 @@
         <span id="energy" class="badge">Estimated Energy 0 kcal</span>
         <span id="timer" class="badge">Time 0.0s</span>
         <span id="lives" class="badge">Lives 5</span>
+        <span id="miniTargets" class="badge mini" title="Remaining servings"></span>
         <button id="targetsToggle" class="badge" type="button" aria-expanded="false">Servings</button>
       </div>
     </div>
@@ -2024,6 +2038,10 @@
       updateLivesUI()
       setMobileControlsVisible(isTouchDevice)
       updateGameEnergyUI()
+      const mini = document.getElementById('miniTargets')
+      if (mini){
+        mini.style.display = (isTouchDevice || (window.matchMedia && window.matchMedia('(max-width: 520px)').matches)) ? 'inline-flex' : 'none'
+      }
     }
     restartBtn.addEventListener('click', reset)
     function updateGameEnergyUI(){
@@ -2034,6 +2052,32 @@
         state.targets?.ProteinPowderProteinPerG
       )
       energyEl.textContent = `Energy ${macros.totalKcal} / ${formatKcal(state.energyLabel, state.energyKcal)} kcal`
+      updateMiniTargetsUI()
+    }
+    function formatRemain(x){
+      const v = Math.max(0, Math.round(x*2)/2)
+      return Math.abs(v - Math.round(v)) < 1e-9 ? String(Math.round(v)) : v.toFixed(1)
+    }
+    function updateMiniTargetsUI(){
+      const el = document.getElementById('miniTargets')
+      if (!el) return
+      const tg = state.targets || {}
+      const cm = state.consumed || {}
+      const remainG = (tg['Grains']||0) - (cm['Grains']||0)
+      const remainP = ((tg['Proteins']||0)+(tg['Proteins_medium']||0)) - ((cm['Proteins']||0)+(cm['Proteins_medium']||0))
+      const remainD = (tg['Dairy']||0) - (cm['Dairy']||0)
+      const remainV = (tg['Vegetables']||0) - (cm['Vegetables']||0)
+      const remainF = (tg['Fruits']||0) - (cm['Fruits']||0)
+      const remainO = (tg['Oils and Nuts']||0) - (cm['Oils and Nuts']||0)
+      const parts = [
+        `<span class="mt"><span class="lbl">G</span><span class="rem">${formatRemain(remainG)}</span></span>`,
+        `<span class="mt"><span class="lbl">P</span><span class="rem">${formatRemain(remainP)}</span></span>`,
+        `<span class="mt"><span class="lbl">D</span><span class="rem">${formatRemain(remainD)}</span></span>`,
+        `<span class="mt"><span class="lbl">V</span><span class="rem">${formatRemain(remainV)}</span></span>`,
+        `<span class="mt"><span class="lbl">F</span><span class="rem">${formatRemain(remainF)}</span></span>`,
+        `<span class="mt"><span class="lbl">O</span><span class="rem">${formatRemain(remainO)}</span></span>`
+      ]
+      el.innerHTML = parts.join(' ')
     }
     function showEndOverlay(){
       if (endPanel) endPanel.style.display = 'block'
@@ -2212,11 +2256,29 @@
     }
     function updateNextFromInputEnabled(){
       if (!nextFromInputBtn) return
-      nextFromInputBtn.disabled = false
+      const mode = modeInputs().find(i=>i.checked)?.value || 'target'
+      if (mode !== 'target'){
+        nextFromInputBtn.disabled = true
+        return
+      }
+      const p = Math.round(+macroProteinEl.value)
+      const f = Math.round(+macroFatEl.value)
+      const c = Math.round(+macroCarbEl.value)
+      const total = p + f + c
+      nextFromInputBtn.disabled = (total !== 100)
     }
     function updateNextToPortionsFromEnergyEnabled(){
       if (!nextToPortionsFromEnergyBtn) return
-      nextToPortionsFromEnergyBtn.disabled = false
+      const macroMode = (document.querySelector('input[name="macroModeProfile"]:checked')?.value) || 'auto'
+      if (macroMode !== 'custom'){
+        nextToPortionsFromEnergyBtn.disabled = false
+        return
+      }
+      const p = Math.round(+macroProteinProfileEl.value)
+      const f = Math.round(+macroFatProfileEl.value)
+      const c = Math.round(+macroCarbProfileEl.value)
+      const total = p + f + c
+      nextToPortionsFromEnergyBtn.disabled = (total !== 100)
     }
     function updateStressUI(){
       const v = stressEl.value
@@ -2472,6 +2534,13 @@
     stressEl.addEventListener('change', updateStressUI)
     updateStressUI()
     function handleNextFromInput(){
+      const mp0 = Math.round(+macroProteinEl.value)
+      const mf0 = Math.round(+macroFatEl.value)
+      const mc0 = Math.round(+macroCarbEl.value)
+      if ((mp0 + mf0 + mc0) !== 100){
+        showToast('三大營養素比例總和必須是 100% 才能繼續','error', 3500)
+        return
+      }
       const age = +ageEl.value
       const sex = sexEl.value
       const height = +heightEl.value
@@ -2501,23 +2570,7 @@
         const override = Math.max(600, isFinite(overrideRaw) ? overrideRaw : 1800)
         if (kcalInputEl) kcalInputEl.value = String(Math.round(override))
 
-        const norm = normalizeMacroInts(+macroProteinEl.value, +macroFatEl.value, +macroCarbEl.value)
-        if (!norm){
-          macroProteinEl.value = '20'
-          macroFatEl.value = '25'
-          macroCarbEl.value = '55'
-          updateMacroLabels()
-        }
-        const norm2 = normalizeMacroInts(+macroProteinEl.value, +macroFatEl.value, +macroCarbEl.value) || { pPct:20, fPct:25, cPct:55 }
-        const mp = Math.round(+macroProteinEl.value)
-        const mf = Math.round(+macroFatEl.value)
-        const mc = Math.round(+macroCarbEl.value)
-        if ((mp + mf + mc) !== 100){
-          macroProteinEl.value = String(norm2.pPct)
-          macroFatEl.value = String(norm2.fPct)
-          macroCarbEl.value = String(norm2.cPct)
-          updateMacroLabels()
-        }
+        const norm2 = { pPct: mp0, fPct: mf0, cPct: mc0 }
         pending.kcal = Math.round(override)
         pending.energyLabel = 'Target Energy'
         pending.macroTarget = { cPct: norm2.cPct, pPct: norm2.pPct, fPct: norm2.fPct }
@@ -2572,16 +2625,17 @@
       let macroTarget = { cPct: 55, pPct: 20, fPct: 25 }
       const macroMode = (document.querySelector('input[name="macroModeProfile"]:checked')?.value) || 'auto'
       if (macroMode === 'custom'){
-        const norm = normalizeMacroInts(+macroProteinProfileEl.value, +macroFatProfileEl.value, +macroCarbProfileEl.value)
-        if (!norm){ showToast('Please set at least one macro value above 0%','error'); return }
         const mp = Math.round(+macroProteinProfileEl.value)
         const mf = Math.round(+macroFatProfileEl.value)
         const mc = Math.round(+macroCarbProfileEl.value)
-        if ((mp + mf + mc) !== 100){
-          macroProteinProfileEl.value = String(norm.pPct)
-          macroFatProfileEl.value = String(norm.fPct)
-          macroCarbProfileEl.value = String(norm.cPct)
-          updateMacroLabelsProfile()
+        const total = mp + mf + mc
+        if (total !== 100){
+          showToast('三大營養素比例總和必須是 100% 才能繼續','error', 3500)
+          return
+        }
+        const norm = { pPct: mp, fPct: mf, cPct: mc }
+        if (!isFinite(norm.pPct) || !isFinite(norm.fPct) || !isFinite(norm.cPct)){
+          showToast('請輸入有效的比例數值','error'); return
         }
         macroTarget = { cPct: norm.cPct, pPct: norm.pPct, fPct: norm.fPct }
       }
@@ -2758,6 +2812,8 @@
       state.running = false
       state.paused = false
       setMobileControlsVisible(false)
+      const mini = document.getElementById('miniTargets')
+      if (mini){ mini.style.display = 'none' }
       showStep('input')
     })
     function spawnNutrition(t){
