@@ -2596,7 +2596,7 @@
         const mf0 = Math.round(+macroFatEl.value)
         const mc0 = Math.round(+macroCarbEl.value)
         if ((mp0 + mf0 + mc0) !== 100){
-          showToast('三大營養素比例總和必須是 100% 才能繼續','error', 3500)
+          showToast('Macronutrient ratios must add up to 100% to continue.','error', 3500)
           return
         }
         const kcalInputEl = document.getElementById('kcal')
@@ -2664,7 +2664,7 @@
         const mc = Math.round(+macroCarbProfileEl.value)
         const total = mp + mf + mc
         if (total !== 100){
-          showToast('三大營養素比例總和必須是 100% 才能繼續','error', 3500)
+          showToast('Macronutrient ratios must add up to 100% to continue.','error', 3500)
           return
         }
         const norm = { pPct: mp, fPct: mf, cPct: mc }
