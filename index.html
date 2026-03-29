@@ -733,7 +733,9 @@
       background:rgba(33, 52, 44, .22);
     }
     @media (max-width: 520px){
-      .form-grid input, .form-grid select{ min-height:46px; line-height:1.15 }
+      .form-grid input, .form-grid select{ min-height:46px; line-height:1.15; font-size:16px }
+      #supplementsList input{ font-size:16px }
+      #setup textarea{ font-size:16px }
       #breakdownTable{
         --scrollTrack:#14131a;
         --scrollThumb:#4a232a;
@@ -1161,6 +1163,8 @@
         'toast.ratioInvalid': 'Please enter valid ratio numbers.',
         'toast.zoomReset': 'If your mobile screen is zoomed, please reset to 100% to avoid visual issues.',
         'toast.suppFillAllFields': 'Please fill out all supplement fields before adding a new item.',
+        'toast.manualServingRoundedOne': 'Note: {item} servings were rounded to {value}.',
+        'toast.manualServingRoundedMany': 'Note: The following servings were rounded: {items}.',
       },
       'zh-Hant': {
         'app.title': '六大類食物份數規劃',
@@ -1278,6 +1282,8 @@
         'toast.ratioInvalid': '請輸入有效的比例數值',
         'toast.zoomReset': '若手機畫面有縮放，請先重設為 100% 以避免顯示異常。',
         'toast.suppFillAllFields': '請先填完營養補充品的所有欄位，才能新增項目。',
+        'toast.manualServingRoundedOne': '提醒：{item} 份數已自動四捨五入為 {value} 份。',
+        'toast.manualServingRoundedMany': '提醒：以下類別份數已自動四捨五入：{items}。',
       }
     }
     let currentLang = 'en'
@@ -2627,21 +2633,31 @@
     }
 
     function getManualTargets(){
-      const out = {}
+      const targets = {}
+      const rounded = []
       const inputs = manualPortionReviewEl.querySelectorAll('.manual-serving')
-      let step = 0.5
-      for (const el of inputs){
-        if (String(el.step) === '0.25'){ step = 0.25; break }
-      }
-      const roundToStep = (n) => Math.round(n / step) * step
+      const fmtHalf = v => (Math.round(v*2)/2).toFixed(1).replace(/\.0$/,'')
+      const cleanLabel = (s) => String(s ?? '')
+        .replace(/\s*\(servings\)\s*$/i, '')
+        .replace(/\s*（份）\s*$/, '')
+        .trim()
       for (const el of inputs){
         const key = el.getAttribute('data-key')
         let v = parseFloat(el.value)
         if (!isFinite(v)) v = 0
         v = Math.max(0, v)
-        out[key] = roundToStep(v)
+        const r = Math.round(v*2)/2
+        targets[key] = r
+        const span = el && el.parentElement && el.parentElement.querySelector && el.parentElement.querySelector('span')
+        const label = cleanLabel(span ? span.textContent : key)
+        if (Math.abs(r - v) > 1e-9){
+          el.value = fmtHalf(r)
+          rounded.push({ key, label, value: fmtHalf(r) })
+        } else {
+          el.value = fmtHalf(v)
+        }
       }
-      return out
+      return { targets, rounded }
     }
 
     function renderManualReview(targets){
@@ -3565,7 +3581,15 @@
         else if (autoPerG != null && Math.abs(nextPerG - autoPerG) > 1e-9) pending._proteinPowderAuto = false
       }
       syncSupplementsServingsFromManualUI()
-      const targets = getManualTargets()
+      const res = getManualTargets()
+      const targets = res.targets
+      const rounded = Array.isArray(res.rounded) ? res.rounded : []
+      if (rounded.length === 1){
+        showToast(t('toast.manualServingRoundedOne', { item: rounded[0].label, value: rounded[0].value }), 'info', 4200)
+      } else if (rounded.length > 1){
+        const sep = currentLang === 'zh-Hant' ? '、' : ', '
+        showToast(t('toast.manualServingRoundedMany', { items: rounded.map(x => x.label).join(sep) }), 'info', 5200)
+      }
       renderManualReview(targets)
     })
 
