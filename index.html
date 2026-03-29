@@ -129,6 +129,7 @@
         linear-gradient(135deg, rgba(16,20,34,.95) 0%, rgba(11,15,26,.96) 100%);
     }
     #setup[data-step="home"] .card-header{ display:none }
+    #setup[data-step="input"] .card-header .btn-row{ display:none }
     .home-splash{
       position:relative;
       min-height:360px;
@@ -224,10 +225,11 @@
         height:560px;
         border-radius:999px;
         background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='260' height='260' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M58 180c18-34 18-78 0-112'/%3E%3Cpath d='M58 92c-10-4-18-10-24-18'/%3E%3Cpath d='M58 116c-10-4-18-10-24-18'/%3E%3Cpath d='M58 140c-10-4-18-10-24-18'/%3E%3Cpath d='M58 92c10-4 18-10 24-18'/%3E%3Cpath d='M58 116c10-4 18-10 24-18'/%3E%3Cpath d='M58 140c10-4 18-10 24-18'/%3E%3Cpath d='M168 82c-14-10-34-10-48 0'/%3E%3Cpath d='M130 86c-12 12-14 30-6 44 10 18 36 24 54 10 18-14 18-40 0-54-16-12-34-12-48 0z'/%3E%3Cpath d='M148 78c0-10 6-18 16-22'/%3E%3Cpath d='M200 176c-20-22-46-22-66 0 20 22 46 22 66 0z'/%3E%3Cpath d='M200 176l18-14'/%3E%3Cpath d='M200 176l18 14'/%3E%3Ccircle cx='184' cy='176' r='3'/%3E%3C/g%3E%3C/svg%3E") 0 0/240px 240px repeat,
           radial-gradient(circle at 40% 42%, rgba(255,255,255,.10), transparent 52%),
           repeating-linear-gradient(45deg, rgba(255,255,255,.04) 0 2px, transparent 2px 10px);
-        filter: blur(0.2px);
-        opacity:.55;
+        filter: blur(0.4px);
+        opacity:.35;
         pointer-events:none;
       }
       .home-splash::after{
@@ -281,10 +283,11 @@
         inset:-18px -18px auto -18px;
         height:220px;
         background:
+          url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='240' height='240' viewBox='0 0 260 260'%3E%3Cg fill='none' stroke='white' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M58 180c18-34 18-78 0-112'/%3E%3Cpath d='M58 92c-10-4-18-10-24-18'/%3E%3Cpath d='M58 116c-10-4-18-10-24-18'/%3E%3Cpath d='M58 140c-10-4-18-10-24-18'/%3E%3Cpath d='M58 92c10-4 18-10 24-18'/%3E%3Cpath d='M58 116c10-4 18-10 24-18'/%3E%3Cpath d='M58 140c10-4 18-10 24-18'/%3E%3Cpath d='M168 82c-14-10-34-10-48 0'/%3E%3Cpath d='M130 86c-12 12-14 30-6 44 10 18 36 24 54 10 18-14 18-40 0-54-16-12-34-12-48 0z'/%3E%3Cpath d='M148 78c0-10 6-18 16-22'/%3E%3Cpath d='M200 176c-20-22-46-22-66 0 20 22 46 22 66 0z'/%3E%3Cpath d='M200 176l18-14'/%3E%3Cpath d='M200 176l18 14'/%3E%3Ccircle cx='184' cy='176' r='3'/%3E%3C/g%3E%3C/svg%3E") 0 0/210px 210px repeat,
           radial-gradient(220px 220px at 14% 30%, rgba(76,125,255,.20), transparent 60%),
           radial-gradient(240px 240px at 88% 40%, rgba(255,77,79,.14), transparent 62%),
           radial-gradient(280px 280px at 48% 92%, rgba(215,200,146,.10), transparent 62%);
-        opacity:.95;
+        opacity:.60;
         pointer-events:none;
       }
       .home-splash .btn.primary{
@@ -869,6 +872,7 @@
           </div>
         </div>
         <div class="btn-row">
+          <button class="btn" id="backToHomeFromInput" type="button" data-i18n="btn.back">Back</button>
           <button class="btn primary" id="nextFromInput" type="button" data-i18n="btn.next">Next</button>
         </div>
       </div>
@@ -987,6 +991,7 @@
     const chooseZhBtn = document.getElementById('chooseZh')
     const chooseEnBtn = document.getElementById('chooseEn')
     const nextFromInputBtn = document.getElementById('nextFromInput')
+    const backToHomeFromInputBtn = document.getElementById('backToHomeFromInput')
     const backToInputFromEnergyBtn = document.getElementById('backToInputFromEnergy')
     const nextToPortionsFromEnergyBtn = document.getElementById('nextToPortionsFromEnergy')
     const backToInputFromPortionsBtn = document.getElementById('backToInputFromPortions')
@@ -3232,6 +3237,10 @@
     showStep('home', false)
     try { history.replaceState({ step: 'home' }, '', '#home') } catch {}
     goHomeBtn && goHomeBtn.addEventListener('click', () => {
+      try { resetToDefaults && resetToDefaults() } catch {}
+      showStep('home')
+    })
+    backToHomeFromInputBtn && backToHomeFromInputBtn.addEventListener('click', () => {
       try { resetToDefaults && resetToDefaults() } catch {}
       showStep('home')
     })
